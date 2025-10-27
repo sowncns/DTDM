@@ -3,14 +3,23 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
+
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(require("cors")());
+
+app.use(express.urlencoded({ extended: true }));
 
 
 // Import routes
-app.use("/api/users", require("./api/users"));
-app.use("/api/upload", require("./api/upload"));
+app.use("/api",require("./api/uploadRoot"));
+app.use("/api",require("./api/createFolder"));
+app.use("/api" ,require("./api/uploadToFolder"));
+app.use("/api",require("./api/createSubfolder"));
+app.use("/api", require("./api/users"));
+app.use("/api", require("./api/showTree"));
+
+
 const PORT = process.env.PORT || 3000;
 
 

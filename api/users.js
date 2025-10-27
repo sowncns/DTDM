@@ -4,7 +4,7 @@ const router = express.Router();
 const User = require("../models/userModel");
 
 // GET /api/users/login
-router.post("/register", async (req, res) => {
+router.post("/user/register", async (req, res) => {
   const { email, password, name } = req.body;
   const users = await User.findOne({ email });
   if (users) {
