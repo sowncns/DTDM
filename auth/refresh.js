@@ -27,7 +27,7 @@ router.post("/refresh", async (req, res) => {
       return res.status(400).json({ message: "Missing refresh token" });
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.sub);
+    const user = await User.findOne({ _id: decoded.sub });
 
     if (!user || user.refreshToken !== refreshToken)
       return res.status(403).json({ message: "Invalid refresh token" });

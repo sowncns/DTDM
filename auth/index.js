@@ -5,4 +5,5 @@ router.use("/", require("./register"));
 router.use("/", require("./login"));
 router.use("/", require("./logout"));
 router.use("/", require("./refresh"));
+router.use("/", require("./delete"));
 module.exports = router;

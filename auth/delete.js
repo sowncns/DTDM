@@ -1,24 +1,23 @@
 const express = require("express");
 const User = require("../models/userModel");
-const { requireAuth } = require("../middleware/auth");
-
 const router = express.Router();
-
+const { requireAuth } = require("../middleware/auth");
 // 🧨 Xóa user theo ID (chỉ chính chủ hoặc admin)
-router.delete("/delete/:id", requireAuth, async (req, res) => {
+router.post("/delete" ,requireAuth ,async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.body.userId;
+    console.log("Delete request for user:", req.user);
     // Chỉ admin hoặc chính chủ mới được xóa
     if (req.user.role !== "admin" && req.user.email !== userId) {
       return res.status(403).json({ message: "Permission denied" });
     }
 
-    const user = await User.findOne({ email: userId });
-    if (!user) {
+    const userDe = await User.findOne({ email: userId });
+    if (!userDe) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    res.json({ message: `User ${user.email} deleted successfully` });
+    await User.deleteOne({ email: userId });
+    res.json({ message: `User ${userDe.email} deleted successfully` });
   } catch (err) {
     res.status(500).json({ message: "Delete failed", error: err.message });
   }

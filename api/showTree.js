@@ -38,6 +38,7 @@ router.get("/folder/tree", requireAuth, async (req, res) => {
         folderMap[file.folder].children.push({
           type: "file",
           name: file.filename,
+          s3Url: file.s3Url,
           size: file.size,
           mimetype: file.mimetype,
         });
@@ -53,6 +54,7 @@ router.get("/folder/tree", requireAuth, async (req, res) => {
       .map((f) => ({
         type: "file",
         name: f.filename,
+        s3Url: f.s3Url,
         size: f.size,
         mimetype: f.mimetype,
       }));
@@ -90,6 +92,7 @@ router.get("/folder/tree/:folderId", requireAuth, async (req, res) => {
         _id: f._id,
         type: "folder",
         name: f.name,
+        s3Url:f.s3Url,
         createdAt: f.createdAt,
       })),
       ...subFiles.map((f) => ({
