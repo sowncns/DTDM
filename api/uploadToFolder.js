@@ -54,7 +54,7 @@ router.post("/upload-to-folder", requireAuth, upload.single("file"), async (req,
     const s3Key = `users/${owner}/${folder ? folder.name + "/" : ""}${Date.now()}_${req.file.originalname}`;
     const s3Upload = await s3
       .upload({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
         Key: s3Key,
         Body: req.file.buffer,
         ContentType: req.file.mimetype,

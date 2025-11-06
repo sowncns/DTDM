@@ -13,7 +13,7 @@ router.delete("/delete/:id", requireAuth, async (req, res) => {
       return res.status(403).json({ message: "Permission denied" });
     }
 
-    const user = await User.findOneAndDelete({ email: userId });
+    const user = await User.findOne({ email: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

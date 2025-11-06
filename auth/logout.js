@@ -1,10 +1,11 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require(".././models/userModel");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-router.post("/logout", async (req, res) => {
+router.post("/logout", requireAuth,async (req, res) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken)
