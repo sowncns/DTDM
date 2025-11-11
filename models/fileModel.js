@@ -1,4 +1,13 @@
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
+const permissionSchema = new Schema({
+  userId: { type: String, required: true }, // ID hoặc email của người dùng
+  access: {
+    type: [String],
+    enum: ["read", "write", "share"],
+    default: ["read"]
+  }
+});
 
 const fileSchema = new mongoose.Schema({
   filename: { type: String, required: true },        // tên file gốc
@@ -13,6 +22,7 @@ const fileSchema = new mongoose.Schema({
     enum: ["private", "shared", "public"],
     default: "private",
   },
+  sharedWith: [permissionSchema],                   // danh sách quyền chi tiết  
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -7,11 +7,11 @@ const router = express.Router();
 // 📤 Cập nhật quyền truy cập file
 router.post("/files/:id", requireAuth, async (req, res) => {
   try {
-    const { mode,emails } = req.body; // mode: "public" | "private" | "shared"
-    const fileId = req.params.id;
+    const { mode,emails,fileId } = req.body; // mode: "public" | "private" | "shared"
     const userEmail = req.user.email;
 
-    const file = await File.findById(fileId);
+    const file = await File.findOne({ _id: fileId });
+    
     if (!file) return res.status(404).json({ message: "File not found" });
 
     // chỉ owner được thay đổi quyền

@@ -1,21 +1,26 @@
 const express = require("express");
-const Folder = require("../models/fileModel");
+const Folder = require("../models/folderModel");
 const { requireAuth } = require("../middleware/auth");
-
+const mongoose = require("mongoose");
 const router = express.Router();
 
 // 📤 Cập nhật quyền truy cập file
-router.post("/folders/:id", requireAuth, async (req, res) => {
+router.post("/folders", requireAuth, async (req, res) => {
   try {
     const { mode,emails } = req.body; // mode: "public" | "private" | "shared"
-    const folderId = req.params.id;
+    const{ folderId }= req.body;
     const userEmail = req.user.email;
 
+    if(!mongoose.isValidObjectId(folderId)){
+      return res.status(400).json({ message: "Invalid folderId" });
+    }
+
     const folder = await Folder.findById(folderId);
+
     if (!folder) return res.status(404).json({ message: "Folder not found" });
 
     // chỉ owner được thay đổi quyền
-    if (folder .owner !== userEmail) {
+    if (folder.owner !== userEmail) {
       return res.status(403).json({ message: "Not allowed" });
     }
 
