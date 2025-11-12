@@ -32,7 +32,7 @@ router.post("/folder", requireAuth, async (req, res) => {
     if (mode === "shared" && Array.isArray(emails)) {
       folder.sharedWith = emails.map((email) => ({
         userId: email,
-        access: [access || "read"],
+        access: [access || "all"],
       }));
     } else {
       folder.sharedWith = [];

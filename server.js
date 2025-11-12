@@ -18,6 +18,7 @@ app.use("/auth", require("./auth"));
 app.use("/share", require("./share"));
 app.use("/payment", require("./payment"));
 app.use("/watch", require("./watch"));
+app.use("/payment", require("./payment"));
 const PORT = process.env.PORT || 3000;
 
 

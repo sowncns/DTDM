@@ -5,7 +5,7 @@ const permissionSchema = new Schema({
   access: {
     type: [String],
     enum: ["read", "write", "share","all"],
-    default: ["read"]
+    default: ["all"]
   }
 });
 

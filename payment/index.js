@@ -1,55 +1,109 @@
 const express = require("express");
-const router = express.Router();
-const User = require("../models/userModel");
+const crypto = require("crypto");
+const axios = require("axios");
 const { requireAuth } = require("../middleware/auth");
+const User = require("../models/userModel"); // ⚠️ cần import model User
+const router = express.Router();
 
-// Packs available for purchase. Prices are illustrative (cents).
-// extra is bytes to add to storageLimit.
-const GB = 1024 * 1024 * 1024;
-const packs = {
-  basic: { id: "basic", name: "Basic +1GB", priceCents: 499, extra: 1 * GB },
-  pro: { id: "pro", name: "Pro +5GB", priceCents: 1999, extra: 5 * GB },
-  ultra: { id: "ultra", name: "Ultra +20GB", priceCents: 4999, extra: 20 * GB },
-};
-
-// GET /packs - list available packs
-router.get("/packs", (req, res) => {
-  res.json({ packs: Object.values(packs) });
-});
-
-// POST /purchase - simulate purchasing a pack and extend user's storageLimit
-// Body: { packId: string }
-// Protected: requires Authorization: Bearer <accessToken>
+/**
+ * 1️⃣ API tạo đơn thanh toán MoMo
+ */
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
-    const { packId } = req.body || {};
-    if (!packId || !packs[packId]) return res.status(400).json({ message: "Invalid packId" });
+    const { amount } = req.body;
+    const userEmail = req.user.email;
 
-    const pack = packs[packId];
+    const partnerCode = "MOMO";
+    const accessKey = "F8BBA842ECF85";
+    const secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
+    const requestId = partnerCode + Date.now();
+    const orderId = requestId;
+    const orderInfo = `Chau Ngoc Son`;
+    const redirectUrl = "http://localhost:3000/payment/check-payment";
+    const ipnUrl = "http://localhost:3000/payment/ipn"; 
+    const requestType = "captureWallet";
+    const extraData = JSON.stringify({ user: userEmail });
 
-    // Find user by email from middleware
-    const ownerEmail = req.user?.email;
-    if (!ownerEmail) return res.status(401).json({ message: "Unauthenticated" });
+    const rawSignature = `accessKey=${accessKey}&amount=${amount || "1000"}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
 
-    const user = await User.findOne({ email: ownerEmail });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const signature = crypto
+      .createHmac("sha256", secretKey)
+      .update(rawSignature)
+      .digest("hex");
 
-if(!false){
-    res.status(402).json({ message: "Payment failed" });
-    return; 
-}
-    user.storageLimit = (user.storageLimit || 0) + pack.extra;
-    await user.save();
+    const requestBody = {
+      partnerCode,
+      accessKey,
+      requestId,
+      amount,
+      orderId,
+      orderInfo,
+      redirectUrl,
+      ipnUrl,
+      extraData,
+      requestType,
+      signature,
+      lang: "vi",
+    };
 
-    return res.json({
-      message: "Purchase successful",
-      pack: { id: pack.id, name: pack.name, addedBytes: pack.extra, priceCents: pack.priceCents },
-      storage: { used: user.storageUsed || 0, limit: user.storageLimit },
+    const momoResponse = await axios.post(
+      "https://test-payment.momo.vn/v2/gateway/api/create",
+      requestBody,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    return res.status(201).json({
+      message: "success",
+      payUrl: momoResponse.data.payUrl,
     });
-  } catch (err) {
-    console.error("Purchase error:", err);
-    return res.status(500).json({ message: "Purchase failed", error: err.message });
+  } catch (error) {
+    console.error("❌ MoMo API Error:", error.response?.data || error.message);
+    return res.status(500).json({
+      message: "MoMo payment failed",
+      error: error.response?.data || error.message,
+    });
   }
 });
+
+router.post("/ipn", async (req, res) => {
+  try {
+    const { resultCode, amount, extraData } = req.body;
+
+    if (resultCode === 0) {
+      const { user } = JSON.parse(extraData);
+      const foundUser = await User.findOne({ email: user });
+
+      if (foundUser) {
+        // ví dụ: 1.000 đồng = +10MB dung lượng
+        const addStorage = parseInt(amount) * 10 * 1024; // bytes
+        foundUser.storageLimit += addStorage;
+        await foundUser.save();
+
+      }
+    }
+
+    // luôn trả 204 cho MoMo
+    res.status(204).send();
+  } catch (error) {
+    console.error("❌ Payment processing error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+ 
+router.get("/check-payment", async (req, res) => {
+  try {
+    const { resultCode, amount, extraData } = req.query;
+    console.log("📩 MoMo Redirect:", req.query);
+    return res.status(200).json({
+      message: "Payment result received",
+    });
+  } catch (error) {
+    console.error("❌ Check payment error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  } 
+}); 
+
 
 module.exports = router;
