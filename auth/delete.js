@@ -2,7 +2,7 @@ const express = require("express");
 const User = require("../models/userModel");
 const router = express.Router();
 const { requireAuth } = require("../middleware/auth");
-// 🧨 Xóa user theo ID (chỉ chính chủ hoặc admin)
+
 router.post("/delete" ,requireAuth ,async (req, res) => {
   try {
     const userId = req.body.userId;

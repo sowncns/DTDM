@@ -11,7 +11,7 @@ const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Sử dụng memoryStorage để đọc file buffer
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Cấu hình AWS S3
@@ -21,7 +21,7 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
 });
 
-// 📁 POST /upload-to-folder (form-data: file, [folderId])
+
 router.post("/upload-to-folder", requireAuth, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
@@ -38,7 +38,7 @@ router.post("/upload-to-folder", requireAuth, upload.single("file"), async (req,
     if (newUsed > user.storageLimit)
       return res.status(400).json({ message: "Storage limit exceeded (100MB)" });
 
-    // Nếu có folderId → kiểm tra folder
+
     let folder = null;
     let folderAncestors = [];
     if (folderId) {

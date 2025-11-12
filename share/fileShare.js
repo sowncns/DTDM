@@ -40,7 +40,7 @@ const router = express.Router();
 //   }
 // });
 
-// 📤 Cập nhật quyền truy cập file
+
 router.post("/file", requireAuth, async (req, res) => {
   try {
     const { mode,emails,fileId,access } = req.body; // mode: "public" | "private" | "shared"

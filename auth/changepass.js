@@ -4,7 +4,7 @@ const User = require("../models/userModel");
 const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
-// 🧩 Change Password
+
 router.post("/change-password", requireAuth, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;

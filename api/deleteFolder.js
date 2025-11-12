@@ -7,20 +7,20 @@ const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-// ⚙️ Cấu hình AWS S3
+
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION,
 });
 
-// 🗑 POST /delete → xóa folder hoặc file
+
 router.post("/delete", requireAuth, async (req, res) => {
   try {
     const owner = req.user.email;
     const { folderId, fileId } = req.body;
 
-    // 🧩 1️⃣ Xóa 1 file cụ thể
+
     if (fileId) {
       if (!mongoose.isValidObjectId(fileId))
         return res.status(400).json({ message: "Invalid fileId" });
@@ -28,7 +28,7 @@ router.post("/delete", requireAuth, async (req, res) => {
       const file = await File.findOne({ _id: fileId, owner });
       if (!file) return res.status(404).json({ message: "File not found" });
 
-      // Xóa file trên AWS S3
+
       if (file.s3Url) {
         const key = file.s3Url.split(".com/")[1];
         await s3.deleteObject({
@@ -44,7 +44,7 @@ router.post("/delete", requireAuth, async (req, res) => {
       });
     }
 
-    // 🧩 2️⃣ Xóa folder (và tất cả file + folder con)
+
     if (folderId) {
       if (!mongoose.isValidObjectId(folderId))
         return res.status(400).json({ message: "Invalid folderId" });
@@ -53,7 +53,7 @@ router.post("/delete", requireAuth, async (req, res) => {
       if (!rootFolder)
         return res.status(404).json({ message: "Folder not found" });
 
-      // Tìm toàn bộ folder con đệ quy
+
       const allFolders = await Folder.find({ owner }).lean();
       const deleteFolders = [];
 
@@ -65,10 +65,9 @@ router.post("/delete", requireAuth, async (req, res) => {
       };
       collectChildren(rootFolder._id);
 
-      // Tìm file trong các folder đó
       const files = await File.find({ owner, folder: { $in: deleteFolders } });
 
-      // Xóa file trên S3
+
       const s3Objects = files
         .filter((f) => f.s3Url)
         .map((f) => ({ Key: f.s3Url.split(".com/")[1] }));
@@ -91,7 +90,6 @@ router.post("/delete", requireAuth, async (req, res) => {
       });
     }
 
-    // 🧩 3️⃣ Không có tham số hợp lệ
     return res.status(400).json({
       message: "Please provide folderId or fileId",
     });

@@ -5,9 +5,6 @@ const { requireAuth } = require("../middleware/auth");
 const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
 
-/**
- * 1️⃣ API tạo đơn thanh toán MoMo
- */
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
     const { amount } = req.body;
@@ -59,7 +56,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
       payUrl: momoResponse.data.payUrl,
     });
   } catch (error) {
-    console.error("❌ MoMo API Error:", error.response?.data || error.message);
+    console.error(" MoMo API Error:", error.response?.data || error.message);
     return res.status(500).json({
       message: "MoMo payment failed",
       error: error.response?.data || error.message,
@@ -76,7 +73,7 @@ router.post("/ipn", async (req, res) => {
       const foundUser = await User.findOne({ email: user });
 
       if (foundUser) {
-        // ví dụ: 1.000 đồng = +10MB dung lượng
+      
         const addStorage = parseInt(amount) * 10 * 1024; // bytes
         foundUser.storageLimit += addStorage;
         await foundUser.save();
@@ -87,7 +84,7 @@ router.post("/ipn", async (req, res) => {
     // luôn trả 204 cho MoMo
     res.status(204).send();
   } catch (error) {
-    console.error("❌ Payment processing error:", error);
+    console.error("Payment processing error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -95,12 +92,12 @@ router.post("/ipn", async (req, res) => {
 router.get("/check-payment", async (req, res) => {
   try {
     const { resultCode, amount, extraData } = req.query;
-    console.log("📩 MoMo Redirect:", req.query);
+    console.log("MoMo Redirect:", req.query);
     return res.status(200).json({
       message: "Payment result received",
     });
   } catch (error) {
-    console.error("❌ Check payment error:", error);
+    console.error("Check payment error:", error);
     res.status(500).json({ message: "Internal server error" });
   } 
 }); 

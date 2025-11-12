@@ -10,19 +10,19 @@ const permissionSchema = new Schema({
 });
 
 const fileSchema = new mongoose.Schema({
-  filename: { type: String, required: true },        // tên file gốc
-  s3Url: { type: String, required: true },           // đường dẫn public/private trên S3
-  size: { type: Number, required: true },            // dung lượng (bytes)
-  mimetype: { type: String, required: true },        // loại file (image/png, pdf,…)
-  owner: { type: String, required: true },           // email hoặc userId
-  folder: { type: mongoose.Schema.Types.ObjectId, ref: "Folder", default: null }, // folder chứa
+  filename: { type: String, required: true },     
+  s3Url: { type: String, required: true },          
+  size: { type: Number, required: true },           
+  mimetype: { type: String, required: true },      
+  owner: { type: String, required: true },         
+  folder: { type: mongoose.Schema.Types.ObjectId, ref: "Folder", default: null },
   folderAncestors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Folder" }],     // cây cha
-  visibility: {                                      // quyền truy cập file
+  visibility: {                                      
     type: String,
     enum: ["private", "shared", "public"],
     default: "private",
   },
-  sharedWith: [permissionSchema],                   // danh sách quyền chi tiết  
+  sharedWith: [permissionSchema],                  
   createdAt: { type: Date, default: Date.now },
 });
 

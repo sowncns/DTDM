@@ -31,7 +31,7 @@ router.get("/tree", requireAuth, async (req, res) => {
       }
     });
 
-    // Gắn file vào folder
+
     files.forEach((file) => {
       if (file.folder && folderMap[file.folder]) {
         folderMap[file.folder].children.push({

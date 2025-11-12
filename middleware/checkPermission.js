@@ -16,13 +16,13 @@ function checkFilePermission(requiredAccess = "read") {
       const file = await File.findById(fileId);
       if (!file) return res.status(404).json({ message: "File not found" });
 
-      // 1️⃣ Chủ sở hữu — full quyền
+
       if (file.owner === userEmail) {
         req.file = file;
         return next();
       }
 
-      // 2️⃣ Public — chỉ cho phép đọc
+
       if (file.visibility === "public") {
         if (requiredAccess === "read") {
           req.file = file;
@@ -31,7 +31,7 @@ function checkFilePermission(requiredAccess = "read") {
         return res.status(403).json({ message: "Public files are read-only" });
       }
 
-      // 3️⃣ Shared — kiểm tra quyền chi tiết
+ 
       if (file.visibility === "shared") {
         const sharedUser = file.sharedWith.find((u) => u.userId === userEmail);
 
@@ -57,7 +57,7 @@ function checkFilePermission(requiredAccess = "read") {
         return next();
       }
 
-      // 4️⃣ Private — chỉ owner được quyền
+
       return res.status(403).json({ message: "You do not have access to this file" });
     } catch (error) {
       console.error("checkFilePermission error:", error);
