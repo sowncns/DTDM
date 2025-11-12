@@ -1,65 +1,69 @@
-// middleware/checkPermission.js
-const Folder = require("../models/folderModel");
 const File = require("../models/fileModel");
 
-async function checkPermission(resourceType, action) {
+/**
+ * Kiểm tra quyền truy cập file theo cấp độ:
+ *  - "read": chỉ đọc
+ *  - "write": chỉnh sửa
+ *  - "share": chia sẻ tiếp
+ *  - "all": toàn quyền
+ */
+function checkFilePermission(requiredAccess = "read") {
   return async (req, res, next) => {
     try {
-      const { id } = req.params;
-      const userId = req.user?.id;
+      const { fileId } = req.params;
+      const userEmail = req.user.email;
 
-      let resource;
+      const file = await File.findById(fileId);
+      if (!file) return res.status(404).json({ message: "File not found" });
 
-      // ✅ Lấy tài nguyên tương ứng
-      if (resourceType === "folder") resource = await Folder.findById(id);
-      else if (resourceType === "file") resource = await File.findById(id);
-      else return res.status(400).json({ error: "Invalid resource type" });
-
-      if (!resource) return res.status(404).json({ error: `${resourceType} not found` });
-
-      // ✅ 1. Chủ sở hữu có toàn quyền
-      if (resource.owner === userId) {
-        req.resource = resource;
+      // 1️⃣ Chủ sở hữu — full quyền
+      if (file.owner === userEmail) {
+        req.file = file;
         return next();
       }
 
-      // ✅ 2. Public → chỉ cho phép đọc
-      if (resource.visibility === "public" && action === "read") {
-        req.resource = resource;
-        return next();
-      }
-
-      // ✅ 3. Shared trực tiếp
-      const sharedList = resource.sharedWith || [];
-      const perm = sharedList.find(u => u.userId === userId);
-      if (perm && perm.access.includes(action)) {
-        req.resource = resource;
-        return next();
-      }
-
-      // ✅ 4. Nếu là file → kế thừa quyền từ folder cha
-      if (resourceType === "file" && resource.folder) {
-        const parent = await Folder.findById(resource.folder);
-        if (parent) {
-          if (parent.visibility === "public" && action === "read") {
-            req.resource = resource;
-            return next();
-          }
-
-          const parentPerm = parent.sharedWith.find(u => u.userId === userId);
-          if (parentPerm && parentPerm.access.includes(action)) {
-            req.resource = resource;
-            return next();
-          }
+      // 2️⃣ Public — chỉ cho phép đọc
+      if (file.visibility === "public") {
+        if (requiredAccess === "read") {
+          req.file = file;
+          return next();
         }
+        return res.status(403).json({ message: "Public files are read-only" });
       }
 
-      return res.status(403).json({ error: "Access denied" });
-    } catch (err) {
-      console.error("checkPermission error:", err);
-      return res.status(500).json({ error: "Internal server error" });
+      // 3️⃣ Shared — kiểm tra quyền chi tiết
+      if (file.visibility === "shared") {
+        const sharedUser = file.sharedWith.find((u) => u.userId === userEmail);
+
+        if (!sharedUser)
+          return res
+            .status(403)
+            .json({ message: "You do not have shared access to this file" });
+
+        const { access } = sharedUser;
+
+        const allowed =
+          access.includes("all") ||
+          (requiredAccess === "read" && access.includes("read")) ||
+          (requiredAccess === "write" && access.includes("write")) ||
+          (requiredAccess === "share" && access.includes("share"));
+
+        if (!allowed)
+          return res
+            .status(403)
+            .json({ message: `Missing required permission: ${requiredAccess}` });
+
+        req.file = file;
+        return next();
+      }
+
+      // 4️⃣ Private — chỉ owner được quyền
+      return res.status(403).json({ message: "You do not have access to this file" });
+    } catch (error) {
+      console.error("checkFilePermission error:", error);
+      res.status(500).json({ message: "Permission check failed", error: error.message });
     }
   };
 }
 
-module.exports = checkPermission;
+module.exports = { checkFilePermission };

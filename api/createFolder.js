@@ -7,7 +7,7 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 // 📁 POST /folder/create  (JSON: { name, parentId? })
-router.post("/folder/create", requireAuth, async (req, res) => {
+router.post("/create", requireAuth, async (req, res) => {
   try {
     const { name, parentId } = req.body;
     const owner = req.user.email;

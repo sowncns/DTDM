@@ -4,14 +4,14 @@ const { requireAuth } = require("../middleware/auth");
 const mongoose = require("mongoose");
 const router = express.Router();
 
-// 📤 Cập nhật quyền truy cập file
-router.post("/folders", requireAuth, async (req, res) => {
+router.post("/folder", requireAuth, async (req, res) => {
   try {
-    const { mode,emails } = req.body; // mode: "public" | "private" | "shared"
-    const{ folderId }= req.body;
+
+    const { mode, emails, folderId, access } = req.body; // mode: "public" | "private" | "shared"
+
     const userEmail = req.user.email;
 
-    if(!mongoose.isValidObjectId(folderId)){
+    if (!mongoose.isValidObjectId(folderId)) {
       return res.status(400).json({ message: "Invalid folderId" });
     }
 
@@ -30,7 +30,10 @@ router.post("/folders", requireAuth, async (req, res) => {
 
     folder.visibility = mode;
     if (mode === "shared" && Array.isArray(emails)) {
-      folder.sharedWith = emails;
+      folder.sharedWith = emails.map((email) => ({
+        userId: email,
+        access: [access || "read"],
+      }));
     } else {
       folder.sharedWith = [];
     }

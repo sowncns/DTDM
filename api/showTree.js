@@ -7,8 +7,7 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 
-// 🧱 API 1️⃣: Lấy toàn bộ cây thư mục của user
-router.get("/folder/tree", requireAuth, async (req, res) => {
+router.get("/tree", requireAuth, async (req, res) => {
   try {
     const owner = req.user.email;
     const user = await User.findOne({ email: owner });
@@ -36,11 +35,13 @@ router.get("/folder/tree", requireAuth, async (req, res) => {
     files.forEach((file) => {
       if (file.folder && folderMap[file.folder]) {
         folderMap[file.folder].children.push({
+          _id: file._id,
           type: "file",
           name: file.filename,
           s3Url: file.s3Url,
           size: file.size,
-          mimetype: file.mimetype,
+          visibility: file.visibility,
+          shareWith:file.sharedWith
         });
       }
     });
@@ -52,11 +53,14 @@ router.get("/folder/tree", requireAuth, async (req, res) => {
     const rootFiles = files
       .filter((f) => !f.folder)
       .map((f) => ({
+           _id: f._id,
         type: "file",
         name: f.filename,
         s3Url: f.s3Url,
         size: f.size,
-        mimetype: f.mimetype,
+        visibility: f.visibility,
+         shareWith:f.sharedWith
+
       }));
 
     res.json([...rootFolders, ...rootFiles]);
@@ -65,9 +69,7 @@ router.get("/folder/tree", requireAuth, async (req, res) => {
   }
 });
 
-
-// 🧱 API 2️⃣: Lấy nội dung 1 folder cụ thể
-router.get("/folder/tree/:folderId", requireAuth, async (req, res) => {
+router.get("/tree/:folderId", requireAuth, async (req, res) => {
   try {
     const owner = req.user.email;
     const { folderId } = req.params;
@@ -93,7 +95,8 @@ router.get("/folder/tree/:folderId", requireAuth, async (req, res) => {
         type: "folder",
         name: f.name,
         s3Url:f.s3Url,
-        createdAt: f.createdAt,
+        visibility: f.visibility,
+         shareWith:f.sharedWith
       })),
       ...subFiles.map((f) => ({
         _id: f._id,
@@ -101,8 +104,9 @@ router.get("/folder/tree/:folderId", requireAuth, async (req, res) => {
         name: f.filename,
         size: f.size,
         s3Url:f.s3Url,
-        mimetype: f.mimetype,
-        uploadedAt: f.createdAt,
+        visibility: f.visibility,
+         shareWith:f.sharedWith
+      
       })),
     ];
 
@@ -110,7 +114,8 @@ router.get("/folder/tree/:folderId", requireAuth, async (req, res) => {
       message: "Folder content fetched successfully",
       folder: folder.name,
       totalItems: contents.length,
-      contents,
+      contents
+    
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });

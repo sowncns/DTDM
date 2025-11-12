@@ -25,7 +25,7 @@ router.post("/change-password", requireAuth, async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: "Password changed successfully" });
+    res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {
     res.status(500).json({ message: "Change password failed", error: err.message });
   }

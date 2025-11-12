@@ -27,7 +27,7 @@ router.post("/upload-to-folder", requireAuth, upload.single("file"), async (req,
 
   try {
     const owner = req.user.email;
-    const { folderId } = req.body;
+    const { folderId, visibility } = req.body;
 
     // Tìm user
     const user = await User.findOne({ email: owner });
@@ -71,6 +71,7 @@ router.post("/upload-to-folder", requireAuth, upload.single("file"), async (req,
       owner,
       folder: folder ? folder._id : null,
       folderAncestors,
+      visibility: visibility || "private",
     });
 
     // Cập nhật dung lượng

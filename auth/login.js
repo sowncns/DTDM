@@ -9,7 +9,7 @@ function signAccessToken(user) {
   return jwt.sign(
     { sub: user._id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.ACCESS_EXPIRES || "15m" }
+    { expiresIn: process.env.ACCESS_EXPIRES || "60m" }
   );
 }
 function signRefreshToken(user) {

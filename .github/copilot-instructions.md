@@ -16,6 +16,8 @@ Short instructions to help an AI agent be immediately productive in this reposit
   - `MONGO_URI` (Mongo connection)
   - `JWT_SECRET` (signing access/refresh tokens)
   - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME` (S3 uploads)
+    - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME` (S3 uploads)
+    - Momo payment (if enabled): `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `MOMO_ENDPOINT`, `MOMO_RETURN_URL`, `MOMO_NOTIFY_URL`
   - Optional: `PORT`, `ACCESS_EXPIRES`, `REFRESH_EXPIRES`
 
 ## Auth patterns and tokens
@@ -51,6 +53,8 @@ Short instructions to help an AI agent be immediately productive in this reposit
 - `models/userModel.js`, `models/fileModel.js`, `models/folderModel.js` — DB schema and important fields/indexes
 - `api/uploadToFolder.js` — S3 upload + quota logic; good example for file handling
 - `auth/login.js`, `auth/refresh.js` — token semantics and rotation
+ - `auth/login.js`, `auth/refresh.js` — token semantics and rotation
+ - `payment/index.js` — payment API. Supports packs and a Momo integration (create-order + /payment/momo-notify IPN handler). See environment vars above.
 
 ## What an AI agent should not assume
 - Do not assume local filesystem storage: code uploads to S3 and stores `s3Url` in DB. While an `uploads/` folder exists in the repo, the runtime upload path is S3 in current handlers.
@@ -62,3 +66,44 @@ Short instructions to help an AI agent be immediately productive in this reposit
 
 ---
 If you'd like, I can: (1) include example curl requests for login/upload, (2) add a small `DEVELOPER.md` with local dev tips (Mongo & dummy S3), or (3) open/modify a route to add clearer error messages. Which would you prefer?
+
+## Examples — quick requests you can run locally
+Below are small curl examples that match the current handlers. Replace placeholders (`<...>`) with real values.
+
+- Login (returns accessToken + refreshToken):
+
+  curl -X POST http://localhost:3000/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"dev@example.com","password":"password123"}'
+
+- Refresh tokens:
+
+  curl -X POST http://localhost:3000/auth/refresh \
+    -H "Content-Type: application/json" \
+    -d '{"refreshToken":"<REFRESH_TOKEN>"}'
+
+- Upload a file to root (requires Authorization header):
+
+  curl -X POST http://localhost:3000/api/upload-to-folder \
+    -H "Authorization: Bearer <ACCESS_TOKEN>" \
+    -F "file=@./path/to/localfile.pdf"
+
+  To upload into a folder, add `-F "folderId=<FOLDER_ID>"` to the same command.
+
+## .env example
+Create a local `.env` file in the repo root (do NOT commit credentials). Example variables required by the app:
+
+```
+MONGO_URI=mongodb://localhost:27017/dtdm
+PORT=3000
+JWT_SECRET=your_jwt_secret_here
+ACCESS_EXPIRES=15m
+REFRESH_EXPIRES=7d
+AWS_ACCESS_KEY_ID=AKIA...EXAMPLE
+AWS_SECRET_ACCESS_KEY=your_secret
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=your-bucket-name
+```
+
+## Final notes
+- If you want I can also add a `DEVELOPER.md` with a local setup guide (start a local Mongo with Docker, and how to stub S3 with LocalStack or use a test bucket). Tell me which example you'd like and I will add it.

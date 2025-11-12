@@ -4,7 +4,7 @@ const permissionSchema = new Schema({
   userId: { type: String, required: true }, // ID hoặc email của người dùng
   access: {
     type: [String],
-    enum: ["read", "write", "share"],
+    enum: ["read", "write", "share","all"],
     default: ["read"]
   }
 });
