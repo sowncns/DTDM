@@ -27,7 +27,7 @@ router.get("/user", requireAuth, async (req, res) => {
       storageUsed: user.storageUsed,
       role: user.role,
       plan: user.plan,
-      name: user.fname || "sonddd"
+      name: user.fname 
     });
   } catch (error) {
     console.error("Error in getUserInfo:", error);
