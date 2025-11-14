@@ -7,5 +7,5 @@ router.use("/", require("./logout"));
 router.use("/", require("./refresh"));
 router.use("/", require("./delete"));
 router.use("/",require("./changepass"))
-
+router.use("/", require("./user"));
 module.exports = router;

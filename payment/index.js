@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { upStore ,amount} = req.body;
     const userEmail = req.user.email;
 
     const partnerCode = "MOMO";
@@ -15,13 +15,13 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
-    const orderInfo = `Chau Ngoc Son`;
-    const redirectUrl = "http://localhost:3000/payment/check-payment";
+    const orderInfo = `${userEmail}`;
+    const redirectUrl = "http://localhost:8080/payment-success";
     const ipnUrl = "http://localhost:3000/payment/ipn"; 
     const requestType = "captureWallet";
-    const extraData = JSON.stringify({ user: userEmail });
+    const extraData = JSON.stringify({ user: userEmail , upStore}); 
 
-    const rawSignature = `accessKey=${accessKey}&amount=${amount || "1000"}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+    const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
 
     const signature = crypto
       .createHmac("sha256", secretKey)
@@ -66,15 +66,15 @@ router.post("/purchase", requireAuth, async (req, res) => {
 
 router.post("/ipn", async (req, res) => {
   try {
-    const { resultCode, amount, extraData } = req.body;
+    const { resultCode, upStore, extraData } = req.body;
 
     if (resultCode === 0) {
-      const { user } = JSON.parse(extraData);
+      const { user, upStore } = JSON.parse(extraData);
       const foundUser = await User.findOne({ email: user });
 
       if (foundUser) {
       
-        const addStorage = parseInt(amount) * 10 * 1024; // bytes
+        const addStorage = parseInt(upStore) * 1024 **3; // bytes
         foundUser.storageLimit += addStorage;
         await foundUser.save();
 
@@ -91,10 +91,25 @@ router.post("/ipn", async (req, res) => {
  
 router.get("/check-payment", async (req, res) => {
   try {
-    const { resultCode, amount, extraData } = req.query;
-    console.log("MoMo Redirect:", req.query);
-    return res.status(200).json({
-      message: "Payment result received",
+    const { resultCode, extraData } = req.query;
+    console.log("MoMo Redirectffffffff:", extraData);
+    if (resultCode === '0') {
+      console.log("Payment successful!");
+      const { user, upStore } = JSON.parse(extraData);
+      const foundUser = await User.findOne({ email: user });
+
+      if (foundUser) {
+      
+        const addStorage = parseInt(upStore) * 1024 **3; // bytes
+        foundUser.storageLimit += addStorage;
+        await foundUser.save();
+
+      }
+    }
+
+    // luôn trả 204 cho MoMo
+    return res.status(204).json({
+      message: "Payment result received payment",
     });
   } catch (error) {
     console.error("Check payment error:", error);

@@ -4,8 +4,8 @@ const permissionSchema = new Schema({
   userId: { type: String, required: true }, // ID hoặc email của người dùng
   access: {
     type: [String],
-    enum: ["read", "write", "share","all"],
-    default: ["all"]
+    enum: ["read", "write","all"],
+    default: ["read"]
   }
 });
 
@@ -16,7 +16,7 @@ const fileSchema = new mongoose.Schema({
   mimetype: { type: String, required: true },      
   owner: { type: String, required: true },         
   folder: { type: mongoose.Schema.Types.ObjectId, ref: "Folder", default: null },
-  folderAncestors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Folder" }],     // cây cha
+  folderAncestors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Folder" }],    
   visibility: {                                      
     type: String,
     enum: ["private", "shared", "public"],

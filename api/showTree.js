@@ -21,7 +21,13 @@ router.get("/tree", requireAuth, async (req, res) => {
     // Tạo map folder
     const folderMap = {};
     folders.forEach((f) => {
-      folderMap[f._id] = { ...f._doc, type: "folder", children: [] };
+      folderMap[f._id] = {
+        id: f._id.toString(),
+        name: f.name,
+        type: "folder",
+        parent: f.parent,
+        children: [],
+      };
     });
 
     // Gắn folder con vào parent
@@ -35,13 +41,13 @@ router.get("/tree", requireAuth, async (req, res) => {
     files.forEach((file) => {
       if (file.folder && folderMap[file.folder]) {
         folderMap[file.folder].children.push({
-          _id: file._id,
+          id: file._id.toString(),
           type: "file",
           name: file.filename,
           s3Url: file.s3Url,
           size: file.size,
           visibility: file.visibility,
-          shareWith:file.sharedWith
+          shareWith: file.sharedWith
         });
       }
     });
@@ -53,13 +59,13 @@ router.get("/tree", requireAuth, async (req, res) => {
     const rootFiles = files
       .filter((f) => !f.folder)
       .map((f) => ({
-           _id: f._id,
+        id: f._id.toString(),
         type: "file",
         name: f.filename,
         s3Url: f.s3Url,
         size: f.size,
         visibility: f.visibility,
-         shareWith:f.sharedWith
+        shareWith: f.sharedWith
 
       }));
 
@@ -91,32 +97,27 @@ router.get("/tree/:folderId", requireAuth, async (req, res) => {
 
     const contents = [
       ...subFolders.map((f) => ({
-        _id: f._id,
+        id: f._id.toString(),
         type: "folder",
         name: f.name,
-        s3Url:f.s3Url,
+        s3Url: f.s3Url,
         visibility: f.visibility,
-         shareWith:f.sharedWith
+        shareWith: f.sharedWith
       })),
       ...subFiles.map((f) => ({
-        _id: f._id,
+        id: f._id.toString(),
         type: "file",
         name: f.filename,
         size: f.size,
-        s3Url:f.s3Url,
+        s3Url: f.s3Url,
         visibility: f.visibility,
-         shareWith:f.sharedWith
-      
+        shareWith: f.sharedWith
+
       })),
     ];
 
-    res.json({
-      message: "Folder content fetched successfully",
-      folder: folder.name,
-      totalItems: contents.length,
-      contents
-    
-    });
+    res.json(
+      contents);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

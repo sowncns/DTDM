@@ -43,7 +43,7 @@ router.get("/:ownerEmail/tree", requireAuth, async (req, res) => {
     folders.forEach((f) => {
       if (canView(f, currentUser)) {
         folderMap[f._id] = {
-          _id: f._id,
+          _id: f._id.toString(),
           name: f.name,
           type: "folder",
           visibility: f.visibility,
@@ -66,7 +66,7 @@ router.get("/:ownerEmail/tree", requireAuth, async (req, res) => {
     files.forEach((file) => {
       if (canView(file, currentUser)) {
         const fileNode = {
-          _id: file._id,
+          _id: file._id.toString(),
           type: "file",
           name: file.filename,
           s3Url: file.s3Url,
@@ -98,7 +98,7 @@ router.get("/:ownerEmail/tree", requireAuth, async (req, res) => {
       structure: [...rootFolders, ...rootFiles],
     });
   } catch (error) {
-    console.error("❌ Drive tree error:", error);
+    console.error("Drive tree error:", error);
     res.status(500).json({
       message: "Failed to fetch drive tree",
       error: error.message,

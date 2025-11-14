@@ -41,7 +41,7 @@ Modes: `private`, `shared`, `public`
 |--------|----------|------|---------|
 | POST | `/payment/purchase` | **✓ HEADER** | Buy pack: `{amount}` → returns Momo payUrl |
 | POST | `/payment/ipn` | ✗ | Momo IPN callback (auto-credits user) |
-| POST | `/payment/check-payment` | ✗ | Frontend  |
+| GET | `/payment/check-payment` | ✗ | Frontend  |
 ## Watch (File Monitoring)
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
