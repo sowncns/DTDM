@@ -3,11 +3,17 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
+const cors = require("cors");
+
 
 
 app.use(express.json());
 app.use(require("cors")());
-
+app.use(cors({
+  origin: "*",           // hoặc FE domain cụ thể
+  methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization",
+}));
 app.use(express.urlencoded({ extended: true }));
 
 
