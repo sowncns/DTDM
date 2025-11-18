@@ -26,7 +26,9 @@ router.get("/tree", requireAuth, async (req, res) => {
         name: f.name,
         type: "folder",
         parent: f.parent,
+        visibility:f.visibility,
         children: [],
+        shareWith:f.sharedWith
       };
     });
 

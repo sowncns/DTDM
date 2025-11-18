@@ -21,10 +21,12 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", require("./api"));
 app.use("/auth", require("./auth"));
-app.use("/share", require("./share"));
+//app.use("/share", require("./share"));
 app.use("/payment", require("./payment"));
 app.use("/watch", require("./watch"));
 app.use("/payment", require("./payment"));
+app.use("/search", require("./search"));
+
 const PORT = process.env.PORT || 3000;
 
 

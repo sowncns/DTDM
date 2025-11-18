@@ -1,11 +1,11 @@
 const express = require("express");
 
 const router = express.Router();
-router.use("/",require("./createFolder"));
-router.use("/" ,require("./uploadToFolder"));
-router.use("/", require("./showTree"));
-router.use("/", require("./deleteFolder"));
+router.use("/",require("./create"));
+router.use("/" ,require("./upload"));
+router.use("/", require("./show"));
+router.use("/", require("./delete"));
 router.use("/", require("./rename"));
-
-
+router.use("/",require("./user"))
+router.use("/",require("./setvisibility"))
 module.exports = router;

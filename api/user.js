@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require("../models/userModel");
 const File = require("../models/fileModel");
 const { requireAuth } = require("../middleware/auth");  
+
 router.get("/user", requireAuth, async (req, res) => {
   try {
     // Lấy user hiện tại từ middleware requireAuth
@@ -27,8 +28,7 @@ router.get("/user", requireAuth, async (req, res) => {
       storageUsed: user.storageUsed,
       role: user.role,
       plan: user.plan,
-      name: user.fname 
-    });
+      name: user.name,    });
   } catch (error) {
     console.error("Error in getUserInfo:", error);
     res.status(500).json({ message: "Internal Server Error" });

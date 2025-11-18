@@ -21,7 +21,7 @@
 ## Files & Folders
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/upload-to-folder` | **✓ HEADER** | Upload file: multipart `{file, [folderId]}` |
+| POST | `/api/upload` | **✓ HEADER** | Upload file: multipart `{file, [folderId]}` |
 | POST | `/api/create` | **✓ HEADER** | Create folder: `{name, [parentId]}` |
 | POST | `/api/delete` | **✓ HEADER** | Delete: `{folderId}` or `{fileId}` |
 | GET | `/api//tree` | **✓ HEADER** | User's full tree |

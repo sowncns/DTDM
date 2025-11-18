@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const permissionSchema = new Schema({
-  userId: { type: String, required: true }, // ID hoặc email của người dùng
+  userId: { type: String, required: true }, // email user
   access: {
     type: [String],
-    enum: ["read", "write","all"],
-    default: ["read"]
+    enum: ["view", "edit", "all"],
+    default: ["view"]
   }
 });
 

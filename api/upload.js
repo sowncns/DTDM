@@ -22,7 +22,7 @@ const s3 = new AWS.S3({
 });
 
 
-router.post("/upload-to-folder", requireAuth, upload.single("file"), async (req, res) => {
+router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
   try {

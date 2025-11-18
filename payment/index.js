@@ -16,8 +16,8 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
     const orderInfo = `${userEmail}`;
-    const redirectUrl = "http://52.76.57.239/payment-success";
-    const ipnUrl = "http://52.76.57.239/payment/ipn"; 
+    const redirectUrl = "http://localhost:8080/payment-success";
+    const ipnUrl = "http://localhost:3000/payment/ipn"; 
     const requestType = "captureWallet";
     const extraData = JSON.stringify({ user: userEmail , upStore}); 
 
