@@ -66,9 +66,9 @@ router.post("/purchase", requireAuth, async (req, res) => {
 
 router.post("/ipn", async (req, res) => {
   try {
-    const { resultCode, upStore, extraData } = req.body;
+    const { resultCode, extraData } = req.body;
 
-    if (resultCode === 0) {
+    if (resultCode === '0') {
       const { user, upStore } = JSON.parse(extraData);
       const foundUser = await User.findOne({ email: user });
 
@@ -80,42 +80,41 @@ router.post("/ipn", async (req, res) => {
 
       }
     }
-
-    // luôn trả 204 cho MoMo
-    res.status(204).send();
+    
+    res.status(204).send({message:"Payment result received payment"});
   } catch (error) {
     console.error("Payment processing error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
  
-router.get("/check-payment", async (req, res) => {
-  try {
-    const { resultCode, extraData } = req.query;
-    console.log("MoMo Redirectffffffff:", extraData);
-    if (resultCode === '0') {
-      console.log("Payment successful!");
-      const { user, upStore } = JSON.parse(extraData);
-      const foundUser = await User.findOne({ email: user });
+// router.get("/check-payment", async (req, res) => {
+//   try {
+//     const { resultCode, extraData } = req.query;
+//     console.log("MoMo Redirectffffffff:", extraData);
+//     if (resultCode === '0') {
+//       console.log("Payment successful!");
+//       const { user, upStore } = JSON.parse(extraData);
+//       const foundUser = await User.findOne({ email: user });
 
-      if (foundUser) {
+//       if (foundUser) {
       
-        const addStorage = parseInt(upStore) * 1024 **3; // bytes
-        foundUser.storageLimit += addStorage;
-        await foundUser.save();
+//         const addStorage = parseInt(upStore) * 1024 **3; // bytes
+//         foundUser.storageLimit += addStorage;
+//         await foundUser.save();
 
-      }
-    }
+//       }
+//     }
 
-    // luôn trả 204 cho MoMo
-    return res.status(204).json({
-      message: "Payment result received payment",
-    });
-  } catch (error) {
-    console.error("Check payment error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  } 
-}); 
+//     // luôn trả 204 cho MoMo
+//     return res.status(204).json({
+//       message: "Payment result received payment",
+//     });
+//   } catch (error) {
+//     console.error("Check payment error:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   } 
+// }); 
 
 
 module.exports = router;
