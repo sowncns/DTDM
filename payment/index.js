@@ -5,6 +5,8 @@ const { requireAuth } = require("../middleware/auth");
 const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
 const checkStatus  = false;
+const IPx = 'http://localhost:3000';
+const IP = 'http://52.76.57.239'
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
     const { upStore, amount } = req.body;
@@ -17,8 +19,8 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
 
-    const redirectUrl = "https://youtube.com";
-    const ipnUrl = "http://52.76.57.239/payment/ipn";
+    const redirectUrl = `${IP}/payment/ipn`;
+    const ipnUrl = `${IP}/payment/ipn`;
 
     // ⚠ PHẢI MÃ HOÁ BASE64
     const rawExtra = JSON.stringify({ user: userEmail, upStore });
@@ -68,13 +70,13 @@ router.post("/purchase", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/ipn", async (req, res) => {
+router.get("/ipn", async (req, res) => {
   try {
-    console.log("MoMo IPN:", req.body);
+    console.log("MoMo IPN:", req.query);
 
-    const { resultCode, extraData } = req.body;
+    const { resultCode, extraData } = req.query;
 
-    if (resultCode === 0) {
+    if (resultCode === 0 || resultCode === '0') {
       // GIẢI MÃ BASE64
       const decoded = Buffer.from(extraData, "base64").toString();
       const { user, upStore } = JSON.parse(decoded);
