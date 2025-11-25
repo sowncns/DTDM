@@ -7,28 +7,38 @@ const router = express.Router();
 const checkStatus  = false;
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
-    const { upStore ,amount} = req.body;
+    const { upStore, amount } = req.body;
     const userEmail = req.user.email;
 
     const partnerCode = "MOMO";
     const accessKey = "F8BBA842ECF85";
     const secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
+
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
-    const orderInfo = `${userEmail}`;
-    const redirectUrl = "https://youtube.com";
-    const ipnUrl = "http://52.76.57.239/payment/ipn"; 
-    const requestType = "captureWallet";
-    const extraData = JSON.stringify({ user: userEmail , upStore}); 
 
-    const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+    const redirectUrl = "https://youtube.com";
+    const ipnUrl = "http://52.76.57.239/payment/ipn";
+
+    // ⚠ PHẢI MÃ HOÁ BASE64
+    const rawExtra = JSON.stringify({ user: userEmail, upStore });
+    const extraData = Buffer.from(rawExtra).toString("base64");
+
+    const requestType = "captureWallet";
+    const orderInfo = "Buy Storage";
+
+    const rawSignature =
+      `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}` +
+      `&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}` +
+      `&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}` +
+      `&requestId=${requestId}&requestType=${requestType}`;
 
     const signature = crypto
       .createHmac("sha256", secretKey)
       .update(rawSignature)
       .digest("hex");
 
-    const requestBody = {
+    const body = {
       partnerCode,
       accessKey,
       requestId,
@@ -45,50 +55,51 @@ router.post("/purchase", requireAuth, async (req, res) => {
 
     const momoResponse = await axios.post(
       "https://test-payment.momo.vn/v2/gateway/api/create",
-      requestBody,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
+      body
     );
 
-    return res.status(201).json({
+    return res.json({
       message: "success",
       payUrl: momoResponse.data.payUrl,
     });
   } catch (error) {
-    console.error(" MoMo API Error:", error.response?.data || error.message);
-    return res.status(500).json({
-      message: "MoMo payment failed",
-      error: error.response?.data || error.message,
-    });
+    console.error("MoMo API Error:", error.response?.data || error.message);
+    return res.status(500).json({ error: error.message });
   }
 });
 
 router.post("/ipn", async (req, res) => {
   try {
+    console.log("MoMo IPN:", req.body);
+
     const { resultCode, extraData } = req.body;
-  console.log("MOmo req:",req.body)
+
     if (resultCode === 0) {
-      const { user, upStore } = JSON.parse(extraData);
+      // GIẢI MÃ BASE64
+      const decoded = Buffer.from(extraData, "base64").toString();
+      const { user, upStore } = JSON.parse(decoded);
+
       const foundUser = await User.findOne({ email: user });
 
       if (foundUser) {
-      
-        const addStorage = parseInt(upStore) * 1024 **3; // bytes
-        foundUser.storageLimit += addStorage;
-        console.log̣̣̣̣("1")
+        const addBytes = Number(upStore) * 1024 ** 3;
+        foundUser.storageLimit += addBytes;
 
         await foundUser.save();
 
+        console.log("UPDATE STORAGE →", user, upStore + "GB");
       }
     }
-    
-    res.status(204).send({message:"Payment result received payment"});
+
+    // ⚠ NEVER RETURN BODY IN 204
+    return res.status(204).send();
+
   } catch (error) {
-    console.error("Payment processing error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("IPN ERROR:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 
 module.exports = router;
