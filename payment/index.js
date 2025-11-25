@@ -19,7 +19,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
 
-    const redirectUrl = `${IP}/payment/success`;
+    const redirectUrl = `${IP}/payment/ipn`;
     const ipnUrl = `${IP}:3000/payment/ipn`;
 
     // ⚠ PHẢI MÃ HOÁ BASE64
@@ -68,11 +68,13 @@ router.post("/purchase", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/ipn", async (req, res) => {
+router.get("/ipn", async (req, res) => {
   try {
-    console.log("MoMo IPN:", req.body);
+    console.log("MoMo IPN:", req.query);
+    console.log("MoMo POST URL:", req.originalUrl);
 
-    const { resultCode, extraData } = req.body;
+
+    const { resultCode, extraData } = req.query;
 
     if (resultCode === 0 || resultCode === '0') {
       // GIẢI MÃ BASE64
