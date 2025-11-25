@@ -17,7 +17,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const orderId = requestId;
     const orderInfo = `${userEmail}`;
     const redirectUrl = "https://youtube.com";
-    const ipnUrl = "http://52.76.57.239/api/payment/ipn"; 
+    const ipnUrl = "http://52.76.57.239/payment/ipn"; 
     const requestType = "captureWallet";
     const extraData = JSON.stringify({ user: userEmail , upStore}); 
 
