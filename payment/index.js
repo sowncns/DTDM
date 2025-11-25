@@ -19,8 +19,8 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
 
-    const redirectUrl = `${IP}/payment/ipn`;
-    const ipnUrl = `${IP}/payment/ipn`;
+    const redirectUrl = `${IP}/payment/success`;
+    const ipnUrl = `${IP}:3000/payment/ipn`;
 
     // ⚠ PHẢI MÃ HOÁ BASE64
     const rawExtra = JSON.stringify({ user: userEmail, upStore });
@@ -60,21 +60,19 @@ router.post("/purchase", requireAuth, async (req, res) => {
       body
     );
 
-    return res.json({
-      message: "success",
-      payUrl: momoResponse.data.payUrl,
-    });
+    return res.json({payUrl :momoResponse.data.payUrl
+  });
   } catch (error) {
     console.error("MoMo API Error:", error.response?.data || error.message);
     return res.status(500).json({ error: error.message });
   }
 });
 
-router.get("/ipn", async (req, res) => {
+router.post("/ipn", async (req, res) => {
   try {
-    console.log("MoMo IPN:", req.query);
+    console.log("MoMo IPN:", req.body);
 
-    const { resultCode, extraData } = req.query;
+    const { resultCode, extraData } = req.body;
 
     if (resultCode === 0 || resultCode === '0') {
       // GIẢI MÃ BASE64
