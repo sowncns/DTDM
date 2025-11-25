@@ -68,7 +68,7 @@ router.post("/ipn", async (req, res) => {
   try {
     const { resultCode, extraData } = req.body;
   console.log("MOmo req:",req.body)
-    if (resultCode === '0') {
+    if (resultCode === 0) {
       const { user, upStore } = JSON.parse(extraData);
       const foundUser = await User.findOne({ email: user });
 
