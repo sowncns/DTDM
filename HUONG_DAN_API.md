@@ -75,13 +75,13 @@ Authorization: Bearer <ACCESS_TOKEN>
 - GET /search/user/:username -REQUIRES JWT - Header
   - Lấy cây của một user khác (public/shared visibility)
 
-- GET /search?kw="aaaa" -REQUIRES JWT - Header
+- GET /search?kw=aaaa -REQUIRES JWT - Header
   -Tim file va folder có aaaa
 
--POST /api/set-visibility -REQUIRES JWT - Header
-    -set quyền của file folder
-    -Body {id,mode,email,access }  ->shared
-    -Body {id,mode}  ->public/private
+- POST /api/set-visibility -REQUIRES JWT - Header
+  -set quyền của file folder
+  -Body {id,mode,email,access }  ->shared
+  -Body {id,mode}  ->public/private
 
 
 ---
