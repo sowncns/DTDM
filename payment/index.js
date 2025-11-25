@@ -16,7 +16,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
     const orderInfo = `${userEmail}`;
-    const redirectUrl = "http://localhost:8080/payment-success";
+    const redirectUrl = "https://youtube.com";
     const ipnUrl = "http://localhost:3000/payment/ipn"; 
     const requestType = "captureWallet";
     const extraData = JSON.stringify({ user: userEmail , upStore}); 
@@ -67,7 +67,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
 router.post("/ipn", async (req, res) => {
   try {
     const { resultCode, extraData } = req.body;
-
+  console.log("MOmo req:",req.body)
     if (resultCode === '0') {
       const { user, upStore } = JSON.parse(extraData);
       const foundUser = await User.findOne({ email: user });
@@ -76,8 +76,9 @@ router.post("/ipn", async (req, res) => {
       
         const addStorage = parseInt(upStore) * 1024 **3; // bytes
         foundUser.storageLimit += addStorage;
+        console.log̣̣̣̣("1")
+
         await foundUser.save();
-        checkStatus = true;
 
       }
     }
@@ -88,10 +89,6 @@ router.post("/ipn", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
- 
-router.get("/check-payment", async (req, res) => {
-  return res.json({message:checkStatus ? "OK":"Fail" })
-}); 
 
 
 module.exports = router;
