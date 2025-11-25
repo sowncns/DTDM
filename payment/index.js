@@ -4,7 +4,7 @@ const axios = require("axios");
 const { requireAuth } = require("../middleware/auth");
 const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
-
+const checkStatus  = false;
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
     const { upStore ,amount} = req.body;
@@ -77,6 +77,7 @@ router.post("/ipn", async (req, res) => {
         const addStorage = parseInt(upStore) * 1024 **3; // bytes
         foundUser.storageLimit += addStorage;
         await foundUser.save();
+        checkStatus = true;
 
       }
     }
@@ -88,33 +89,9 @@ router.post("/ipn", async (req, res) => {
   }
 });
  
-// router.get("/check-payment", async (req, res) => {
-//   try {
-//     const { resultCode, extraData } = req.query;
-//     console.log("MoMo Redirectffffffff:", extraData);
-//     if (resultCode === '0') {
-//       console.log("Payment successful!");
-//       const { user, upStore } = JSON.parse(extraData);
-//       const foundUser = await User.findOne({ email: user });
-
-//       if (foundUser) {
-      
-//         const addStorage = parseInt(upStore) * 1024 **3; // bytes
-//         foundUser.storageLimit += addStorage;
-//         await foundUser.save();
-
-//       }
-//     }
-
-//     // luôn trả 204 cho MoMo
-//     return res.status(204).json({
-//       message: "Payment result received payment",
-//     });
-//   } catch (error) {
-//     console.error("Check payment error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   } 
-// }); 
+router.get("/check-payment", async (req, res) => {
+  return res.json({message:checkStatus ? "OK":"Fail" })
+}); 
 
 
 module.exports = router;
