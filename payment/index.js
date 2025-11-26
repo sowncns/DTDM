@@ -5,8 +5,8 @@ const { requireAuth } = require("../middleware/auth");
 const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
 const checkStatus  = false;
-const IPx = 'http://localhost:3000';
-const IP = 'http://52.76.57.239'
+const IP = 'http://localhost:3000';
+const IPx = 'http://52.76.57.239'
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
     const { upStore, amount } = req.body;
@@ -21,9 +21,9 @@ router.post("/purchase", requireAuth, async (req, res) => {
 
     const redirectUrl = `${IP}/payment/ipn`;
     const ipnUrl = `${IP}:3000/payment/ipn`;
-
+    const nextUrl = "https://youtobe.com"
     // ⚠ PHẢI MÃ HOÁ BASE64
-    const rawExtra = JSON.stringify({ user: userEmail, upStore });
+    const rawExtra = JSON.stringify({ user: userEmail, upStore ,nextUrl});
     const extraData = Buffer.from(rawExtra).toString("base64");
 
     const requestType = "captureWallet";
@@ -79,7 +79,7 @@ router.get("/ipn", async (req, res) => {
     if (resultCode === 0 || resultCode === '0') {
       // GIẢI MÃ BASE64
       const decoded = Buffer.from(extraData, "base64").toString();
-      const { user, upStore } = JSON.parse(decoded);
+      const { user, upStore,nextUrl } = JSON.parse(decoded);
 
       const foundUser = await User.findOne({ email: user });
 
@@ -90,6 +90,7 @@ router.get("/ipn", async (req, res) => {
         await foundUser.save();
 
         console.log("UPDATE STORAGE →", user, upStore + "GB");
+      
       }
     }
 

@@ -10,10 +10,12 @@ const cors = require("cors");
 app.use(express.json());
 app.use(require("cors")());
 app.use(cors({
-  origin: "*",           // hoặc FE domain cụ thể
-  methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type,Authorization",
+  origin: "*",
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type, Authorization"
 }));
+
+app.options("*", cors());
 app.use(express.urlencoded({ extended: true }));
 
 
