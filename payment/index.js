@@ -4,8 +4,6 @@ const axios = require("axios");
 const { requireAuth } = require("../middleware/auth");
 const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
-const checkStatus  = false;
-const IP = 'http://localhost:3000';
 const IPx = 'http://52.76.57.239/payment/ipn'
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
@@ -66,7 +64,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/payment/ipn", async (req, res) => {
+router.post("/ipn", async (req, res) => {
   try {
     console.log("MoMo IPN:", req.body);
 
