@@ -18,7 +18,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const orderId = requestId;
 
     const redirectUrl = `http://52.76.57.239/payment/success`;
-    const ipnUrl = IPx;
+    const ipnUrl = "https://korey-unteeming-remi.ngrok-free.dev";
     // ⚠ PHẢI MÃ HOÁ BASE64
     const rawExtra = JSON.stringify({ user: userEmail, upStore });
     const extraData = Buffer.from(rawExtra).toString("base64");
@@ -56,6 +56,9 @@ router.post("/purchase", requireAuth, async (req, res) => {
       "https://test-payment.momo.vn/v2/gateway/api/create",
       body
     );
+    console.log("RAW SIGNATURE:", rawSignature);
+console.log("SIGNATURE:", signature);
+console.log("BODY SEND TO MOMO:", body);
 
     return res.json({payUrl :momoResponse.data.payUrl });
   } catch (error) {
