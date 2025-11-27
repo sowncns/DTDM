@@ -6,7 +6,7 @@ const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
 const checkStatus  = false;
 const IP = 'http://localhost:3000';
-const IPx = 'http://52.76.57.239'
+const IPx = 'http://52.76.57.239/payment/ipn'
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
     const { upStore, amount } = req.body;
