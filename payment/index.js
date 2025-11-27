@@ -17,7 +17,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
 
-    const redirectUrl = `https://youtube.com`;
+    const redirectUrl = `http://52.76.57.239/payment/success`;
     const ipnUrl = IPx;
     // ⚠ PHẢI MÃ HOÁ BASE64
     const rawExtra = JSON.stringify({ user: userEmail, upStore });
@@ -67,7 +67,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
 router.post("/ipn", async (req, res) => {
   try {
     console.log("MoMo IPN:", req.body);
-
+ console.log("MoMo ipb");
 
     const { resultCode, extraData } = req.body;
 
