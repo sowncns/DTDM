@@ -22,7 +22,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const redirectUrl = `https://youtube.com`;
     const ipnUrl = IPx;
     // ⚠ PHẢI MÃ HOÁ BASE64
-    const rawExtra = JSON.stringify({ user: userEmail, upStore ,nextUrl});
+    const rawExtra = JSON.stringify({ user: userEmail, upStore });
     const extraData = Buffer.from(rawExtra).toString("base64");
 
     const requestType = "captureWallet";
@@ -76,7 +76,7 @@ router.post("/payment/ipn", async (req, res) => {
     if (resultCode === 0 || resultCode === '0') {
       // GIẢI MÃ BASE64
       const decoded = Buffer.from(extraData, "base64").toString();
-      const { user, upStore,nextUrl } = JSON.parse(decoded);
+      const { user, upStore } = JSON.parse(decoded);
 
       const foundUser = await User.findOne({ email: user });
 
