@@ -8,6 +8,7 @@ const User = require("../models/userModel");
 const File = require("../models/fileModel");
 const Folder = require("../models/folderModel");
 const { requireAuth } = require("../middleware/auth");
+const { writeActivity } = require("../log");
 
 const router = express.Router();
 
@@ -83,6 +84,9 @@ router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
       await folder.save();
     }
 
+    // log success
+    try { writeActivity(`INSERT FILE id=${savedFile._id} owner=${owner}`, 'OK', `name=${savedFile.filename} size=${savedFile.size}`); } catch(_){}
+
     return res.json({
       message: folder
         ? `Upload success (in folder "${folder.name}")`
@@ -96,6 +100,7 @@ router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
     });
   } catch (err) {
     console.error("Upload error:", err);
+    try { writeActivity(`INSERT FILE owner=${req.user?.email || 'unknown'}`, 'FAILED', err.message); } catch(_){}
     res.status(500).json({ message: "Upload failed", error: err.message });
   }
 });

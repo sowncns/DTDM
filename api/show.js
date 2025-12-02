@@ -13,9 +13,10 @@ router.get("/tree", requireAuth, async (req, res) => {
     const user = await User.findOne({ email: owner });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Exclude trashed items (only show active content)
     const [folders, files] = await Promise.all([
-      Folder.find({ owner }),
-      File.find({ owner }),
+      Folder.find({ owner, trashed: { $ne: true } }),
+      File.find({ owner, trashed: { $ne: true } }),
     ]);
 
     // Tạo map folder
@@ -93,8 +94,8 @@ router.get("/tree/:folderId", requireAuth, async (req, res) => {
 
     // Lấy folder con + file trong folder
     const [subFolders, subFiles] = await Promise.all([
-      Folder.find({ parent: folderId, owner }),
-      File.find({ folder: folderId, owner }),
+      Folder.find({ parent: folderId, owner, trashed: { $ne: true } }),
+      File.find({ folder: folderId, owner, trashed: { $ne: true } }),
     ]);
 
     const contents = [
@@ -118,8 +119,7 @@ router.get("/tree/:folderId", requireAuth, async (req, res) => {
       })),
     ];
 
-    res.json(
-      contents);
+    res.json(contents);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

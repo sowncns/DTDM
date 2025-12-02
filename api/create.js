@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Folder = require("../models/folderModel");
 const User = require("../models/userModel");
 const { requireAuth } = require("../middleware/auth");
+const { writeActivity } = require("../log");
 
 const router = express.Router();
 
@@ -57,6 +58,9 @@ router.post("/create", requireAuth, async (req, res) => {
       storageUsed: 0,
     });
 
+    // log activity
+    try { writeActivity(`INSERT FOLDER id=${folder._id} owner=${owner}`, 'OK', `name=${folder.name}`); } catch(_){}
+
     res.json({
       message: parent
         ? `Subfolder "${folder.name}" created inside "${parent.name}"`
@@ -65,6 +69,7 @@ router.post("/create", requireAuth, async (req, res) => {
     });
   } catch (err) {
     console.error("Create folder error:", err);
+    try { writeActivity(`INSERT FOLDER owner=${owner}`, 'FAILED', err.message); } catch(_){}
     res.status(500).json({ message: "Create folder failed", error: err.message });
   }
 });

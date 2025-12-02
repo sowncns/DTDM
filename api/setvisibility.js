@@ -2,6 +2,7 @@ const express = require("express");
 const File = require("../models/fileModel");
 const Folder = require("../models/folderModel");
 const { requireAuth } = require("../middleware/auth");
+const { writeActivity } = require("../log");
 
 const router = express.Router();
 
@@ -92,6 +93,7 @@ router.post("/set-visibility", requireAuth, async (req, res) => {
     if (mode !== "shared") item.sharedWith = [];
 
     await item.save();
+    try { writeActivity(`UPDATE ${type.toUpperCase()} id=${item._id} owner=${userEmail}`, 'OK', `visibility=${mode}`); } catch(_){}
 
     // ========= APPLY TO CHILDREN =========
     if (type === "folder") {
@@ -115,12 +117,18 @@ router.post("/set-visibility", requireAuth, async (req, res) => {
         }
 
         await f.save();
+        // log child update
+        try {
+          const kind = f.constructor && f.constructor.modelName ? f.constructor.modelName.toUpperCase() : 'ITEM';
+          writeActivity(`UPDATE ${kind} id=${f._id} owner=${f.owner}`, 'OK', `propagated visibility=${f.visibility}`);
+        } catch(_){}
       }
     }
 
     res.json({ message: "Visibility updated", item, type });
 
   } catch (err) {
+    try { writeActivity(`UPDATE ${req.body?.id || 'UNKNOWN'}`, 'FAILED', err.message); } catch(_){}
     res.status(500).json({ message: "Error", error: err.message });
   }
 });

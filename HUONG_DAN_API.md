@@ -56,8 +56,21 @@ Authorization: Bearer <ACCESS_TOKEN>
   - Tạo folder
 
 - POST /api/delete — REQUIRES JWT - Header
-  - Body: { fileId } hoặc { folderId }
-  - Nếu là folder, xóa đệ quy mọi file + folder con
+  - Body: { id } (id của file hoặc folder)
+  - Mặc định hệ thống sẽ **move to trash** (soft-delete) — item được đánh dấu `trashed: true` để có thể restore sau này.
+  - Để xóa vĩnh viễn, gửi `{ id: "<id>", permanent: true }`.
+  - Nếu id là folder, hành vi: move-to-trash (hoặc permanent delete nếu `permanent: true`) đệ quy toàn bộ file + folder con
+
+---
+
+### Thùng rác (Trash)
+- GET /api/trash — REQUIRES JWT - Header
+  - Liệt kê file và folder đang nằm trong thùng rác của user (trashed = true)
+- POST /api/trash/restore — REQUIRES JWT - Header
+  - Body: { id } — phục hồi file hoặc folder (folder phục hồi đệ quy con)
+- POST /api/trash/empty — REQUIRES JWT - Header
+  - Body: { id? } — nếu có id: xóa vĩnh viễn item đó; nếu không: xóa vĩnh viễn tất cả item trong trash của user
+  - Xóa vĩnh viễn sẽ xóa file từ S3 (nếu có) và cập nhật `storageUsed` của user
 
 - GET /api/tree — REQUIRES JWT - Header
   - Lấy toàn bộ cây thư mục file của user (root + children)
@@ -88,6 +101,16 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 3) Chia sẻ (Sharing)
 
+- GET /share/file/:fileId
+  - Mọi người có thể truy cập file nếu `visibility === 'public'`.
+  - Nếu `visibility === 'shared'` thì cần Authorization header với token và file phải chia sẻ với email đó (hoặc requester là owner/admin).
+  - Response: `{ filename, s3Url, mimetype, size }` (trả s3Url để frontend có thể tải hoặc hiển thị).
+
+- GET /share/folder/:folderId
+  - Nếu thư mục `visibility === 'public'` thì trả về danh sách đệ quy tất cả thư mục con và files (không bao gồm trashed) và file objects trả `s3Url`.
+  - Nếu thư mục `visibility === 'shared'` thì cần Authorization và thuộc `sharedWith`.
+  - Response: `{ folder: { id, name, owner }, folders: [...], files: [...] }` (files có `s3Url`).
+
 
 ---
 
@@ -99,51 +122,3 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 - POST /payment/ipn
   - Callback (IPN) từ Momo, server kiểm tra signature và cập nhật transaction + tăng storageLimit khi thanh toán thành công
-
-- POST /payment/check-payment
-  ktra thah cong hay ko
-
----
-
-5) Watch (giám sát thay đổi file hệ thống)
-
-- GET /watch/status
-  - Kiểm tra trạng thái watcher và 10 event gần nhất
-
-- GET /watch/events?since=<ts>&limit=<n>
-  - Lấy các event đã xảy ra kể từ timestamp (ms)
-
-- POST /watch/clear
-  - Xóa bộ nhớ event trên server
-
----
-
-Ví dụ nhanh (PowerShell)
-
-1) Login lấy access token
-
-```powershell
-$response = Invoke-RestMethod http://localhost:3000/auth/login -Method POST -Headers @{ 'Content-Type'='application/json' } -Body '{"email":"dev@example.com","password":"secret"}'
-$token = $response.accessToken
-```
-
-2) Upload file
-
-```powershell
-Invoke-RestMethod http://localhost:3000/api/upload-to-folder -Method POST -Headers @{ 'Authorization' = "Bearer $token" } -Form @{ file = Get-Item "C:\\tmp\\doc.pdf" }
-```
-
-3) Tạo folder
-
-```powershell
-Invoke-RestMethod http://localhost:3000/api/create -Method POST -Headers @{ 'Content-Type'='application/json'; 'Authorization' = "Bearer $token" } -Body '{"name":"Docs"}'
-```
-
----
-
-File này là bản tóm tắt ngắn gọn để nhanh chóng bắt đầu dùng API. Nếu bạn muốn, tôi sẽ:
-- Thêm ví dụ curl (POSIX) tương ứng
-- Xuất Postman collection hoặc OpenAPI (Swagger)
-- Thêm chi tiết về payload/response và lỗi cụ thể cho từng endpoint
-
-Bạn muốn tôi làm tiếp theo hướng nào?

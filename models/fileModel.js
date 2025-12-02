@@ -23,6 +23,9 @@ const fileSchema = new mongoose.Schema({
     default: "private",
   },
   sharedWith: [permissionSchema],                  
+  trashed: { type: Boolean, default: false },
+  trashedAt: { type: Date, default: null },
+  trashedBy: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
 });
 

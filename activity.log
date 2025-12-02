@@ -1,0 +1,22 @@
+2025-12-01T17:57:18.369Z - DELETE FILE id=691c9743a02e16d8bebe9c32 owner=v - TRASHED - name=deleteFolder.js
+2025-12-01T18:16:40.754Z - UPDATE FOLDER id=691ca145ee7d173dd25550c1 owner=v - OK - visibility=public
+2025-12-01T18:16:40.936Z - UPDATE FILE id=691cba44d8b914fb1be4c222 owner=v - OK - propagated visibility=shared
+2025-12-01T18:20:34.586Z - ACCESS FOLDER id=691ca145ee7d173dd25550c1 - OK - items=1
+2025-12-01T18:21:27.498Z - ACCESS FILE id=691cba44d8b914fb1be4c222 - OK - shared
+2025-12-02T06:17:52.134Z - INSERT FILE id=692e84904b534043f5a31da6 owner=qa - OK - name=hinh-nen-desktop-3.jpg size=155498
+2025-12-02T06:17:53.093Z - INSERT FILE id=692e84904b534043f5a31db2 owner=qa - OK - name=hinh-nen-desktop-27.jpg size=74255
+2025-12-02T06:17:53.600Z - INSERT FILE id=692e84914b534043f5a31dbe owner=qa - OK - name=2c3502908138c483e7c8511cb31c9c9b.jpg size=34817
+2025-12-02T06:17:55.936Z - INSERT FILE id=692e84934b534043f5a31dca owner=qa - OK - name=7523e282f5fd19e4eaabcfcb00aaeaef.jpg size=1771701
+2025-12-02T06:17:56.611Z - INSERT FILE id=692e84944b534043f5a31dd6 owner=qa - OK - name=IMG_0936.jpeg size=176150
+2025-12-02T06:17:57.428Z - INSERT FILE id=692e84954b534043f5a31de2 owner=qa - OK - name=TieÌÌu LuaÌ£Ìn CuoÌÌi KhoÌa_nndc (1).docx size=269733
+2025-12-02T06:17:58.177Z - INSERT FILE id=692e84964b534043f5a31dee owner=qa - OK - name=TieÌÌu LuaÌ£Ìn CuoÌÌi KhoÌa_nndc.docx size=269733
+2025-12-02T06:18:00.392Z - INSERT FILE id=692e84984b534043f5a31dfa owner=qa - OK - name=BaiThucHanh_HK1_2425.rar size=1660868
+2025-12-02T06:18:00.865Z - INSERT FILE id=692e84984b534043f5a31e06 owner=qa - OK - name=sinhvien.csv size=5154
+2025-12-02T06:18:01.488Z - INSERT FILE id=692e84994b534043f5a31e12 owner=qa - OK - name=4. Thuc hanh thao tac du lieu voi Pandas.pdf size=167234
+2025-12-02T06:18:02.191Z - INSERT FILE id=692e849a4b534043f5a31e1e owner=qa - OK - name=3. Thuc hanh thao tac co ban tren NumPy.pdf size=167600
+2025-12-02T06:18:02.787Z - INSERT FILE id=692e849a4b534043f5a31e2a owner=qa - OK - name=2. Bai thuc hanh python co ban.pdf size=147176
+2025-12-02T06:18:03.235Z - INSERT FILE id=692e849b4b534043f5a31e3a owner=qa - OK - name=BÃâ¬I TÃ¡ÂºÂ¬P THÃ¡ÂºÂ¢O LUÃ¡ÂºÂ¬N - chÃÂ°ÃÂ¡ng 7.docx size=14595
+2025-12-02T06:18:13.745Z - UPDATE FILE id=692e849b4b534043f5a31e3a owner=qa - OK - rename BÃâ¬I TÃ¡ÂºÂ¬P THÃ¡ÂºÂ¢O LUÃ¡ÂºÂ¬N - chÃÂ°ÃÂ¡ng 7.docx -> ddddd
+2025-12-02T06:18:20.421Z - INSERT FOLDER id=692e84ac4b534043f5a31e4a owner=qa - OK - name=gkgugg
+2025-12-02T06:18:33.715Z - INSERT FILE id=692e84b94b534043f5a31e5a owner=qa - OK - name=IMG_0936.jpeg size=176150
+2025-12-02T06:18:44.124Z - DELETE FILE id=692e84994b534043f5a31e12 owner=qa - TRASHED - name=4. Thuc hanh thao tac du lieu voi Pandas.pdf
