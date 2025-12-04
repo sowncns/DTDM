@@ -105,16 +105,20 @@ router.get("/tree/:folderId", requireAuth, async (req, res) => {
         name: f.name,
         s3Url: f.s3Url,
         visibility: f.visibility,
-        shareWith: f.sharedWith
+        shareWith: f.sharedWith,
+        createdAt: f.createdAt,
+        updatedAt: f.updatedAt,
       })),
       ...subFiles.map((f) => ({
-        id: f._id.toString(),
+       id: f._id.toString(),
         type: "file",
         name: f.filename,
         size: f.size,
         s3Url: f.s3Url,
         visibility: f.visibility,
-        shareWith: f.sharedWith
+        shareWith: f.sharedWith,
+        createdAt: f.createdAt,
+        updatedAt: f.updatedAt
 
       })),
     ];
