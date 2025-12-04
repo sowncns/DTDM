@@ -98,13 +98,13 @@ router.post('/trash/delete', requireAuth, async (req, res) => {
       if (file.s3Url) {
         const Key = file.s3Url.split('.com/')[1];
         await s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET_NAME, Key }).promise();
+      }
 
       await file.deleteOne();
       const newUsed = await calculateUsedStorage(owner);
       await User.updateOne({ email: owner }, { storageUsed: newUsed });
-      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){}
+      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){ }
       return res.json({ message: 'File permanently deleted', id, storageUsed: newUsed });
-      }
     }
     const folder = await Folder.findById(id);
     if (!folder) return res.status(404).json({ message: 'Item not found' });
@@ -119,14 +119,14 @@ router.post('/trash/delete', requireAuth, async (req, res) => {
     const s3Objects = files.filter((f) => f.s3Url).map((f) => ({ Key: f.s3Url.split('.com/')[1] }));
     if (s3Objects.length) {
       await s3.deleteObjects({ Bucket: process.env.AWS_S3_BUCKET_NAME, Delete: { Objects: s3Objects } }).promise();
+    }
 
     const fileRes = await File.deleteMany({ owner, folder: { $in: deleteFolders }, trashed: true });
     const folderRes = await Folder.deleteMany({ _id: { $in: deleteFolders }, trashed: true });
     const newUsed = await calculateUsedStorage(owner);
     await User.updateOne({ email: owner }, { storageUsed: newUsed });
-    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${folderRes.deletedCount || 0} files=${fileRes.deletedCount || 0}`); } catch(_){}
+    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${folderRes.deletedCount || 0} files=${fileRes.deletedCount || 0}`); } catch(_){ }
     return res.json({ message: 'Folder permanently deleted', deletedFolders: folderRes.deletedCount || 0, deletedFiles: fileRes.deletedCount || 0, storageUsed: newUsed });
-    }
   } catch (err) {
     console.error('Delete error:', err);
     res.status(500).json({ message: 'Delete failed', error: err.message });
