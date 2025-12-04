@@ -6,7 +6,7 @@ const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
-    const { upStore, amount } = req.body;
+    const { upStore, amount ,planName} = req.body;
     const userEmail = req.user.email;
 
     const partnerCode = "MOMO";
@@ -19,7 +19,7 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const redirectUrl = `http://192.168.1.223:8080/dashboard`;
     const ipnUrl = "https://korey-unteeming-remi.ngrok-free.dev/payment/ipn";
    
-    const rawExtra = JSON.stringify({ user: userEmail, upStore });
+    const rawExtra = JSON.stringify({ user: userEmail, upStore ,planName});
     const extraData = Buffer.from(rawExtra).toString("base64");
 
     const requestType = "captureWallet";
@@ -76,14 +76,15 @@ router.post("/ipn", async (req, res) => {
     if (resultCode === 0 || resultCode === '0') {
       // GIẢI MÃ BASE64
       const decoded = Buffer.from(extraData, "base64").toString();
-      const { user, upStore } = JSON.parse(decoded);
+      const { user, upStore ,planName} = JSON.parse(decoded);
 
       const foundUser = await User.findOne({ email: user });
 
       if (foundUser) {
         const addBytes = Number(upStore) * 1024 ** 3;
         foundUser.storageLimit += addBytes;
-
+        foundUser.plan = planName;
+        foundUser.lastPaymentDate = new Date();
         await foundUser.save();
 
         console.log("UPDATE STORAGE →", user, upStore + "GB");
