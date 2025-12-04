@@ -4,7 +4,6 @@ const axios = require("axios");
 const { requireAuth } = require("../middleware/auth");
 const User = require("../models/userModel"); // ⚠️ cần import model User
 const router = express.Router();
-const IPx = 'http://52.76.57.239/payment/ipn'
 router.post("/purchase", requireAuth, async (req, res) => {
   try {
     const { upStore, amount } = req.body;
@@ -17,9 +16,9 @@ router.post("/purchase", requireAuth, async (req, res) => {
     const requestId = partnerCode + Date.now();
     const orderId = requestId;
 
-    const redirectUrl = `http://52.76.57.239/payment/success`;
+    const redirectUrl = `http://192.168.1.223:8080/dashboard`;
     const ipnUrl = "https://korey-unteeming-remi.ngrok-free.dev/payment/ipn";
-    // ⚠ PHẢI MÃ HOÁ BASE64
+   
     const rawExtra = JSON.stringify({ user: userEmail, upStore });
     const extraData = Buffer.from(rawExtra).toString("base64");
 
