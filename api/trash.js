@@ -27,9 +27,9 @@ router.get('/trash', requireAuth, async (req, res) => {
     const owner = req.user.email;
     const [folders, files] = await Promise.all([
       Folder.find({ owner, trashed: true }),
-      File.find({ owner, trashed: true }) ,
+      File.find({ owner, trashed: true }),
     ]);
-    const data =[...folders, ...files]
+    const data = [...folders, ...files]
     res.json(data);
   } catch (err) {
     console.error('List trash error:', err);
@@ -54,7 +54,7 @@ router.post('/trash/restore', requireAuth, async (req, res) => {
       file.trashedAt = null;
       file.trashedBy = null;
       await file.save();
-      try { writeActivity(`RESTORE FILE id=${id} owner=${owner}`, 'OK'); } catch(_){}
+      try { writeActivity(`RESTORE FILE id=${id} owner=${owner}`, 'OK'); } catch (_) { }
       return res.json({ message: 'File restored', id });
     }
 
@@ -75,7 +75,7 @@ router.post('/trash/restore', requireAuth, async (req, res) => {
     await Folder.updateMany({ _id: { $in: restoreFolders } }, { $set: { trashed: false, trashedAt: null, trashedBy: null } });
     await File.updateMany({ owner, folder: { $in: restoreFolders } }, { $set: { trashed: false, trashedAt: null, trashedBy: null } });
 
-    try { writeActivity(`RESTORE FOLDER id=${id} owner=${owner}`, 'OK', `restoredFolders=${restoreFolders.length}`); } catch(_){}
+    try { writeActivity(`RESTORE FOLDER id=${id} owner=${owner}`, 'OK', `restoredFolders=${restoreFolders.length}`); } catch (_) { }
     return res.json({ message: 'Folder restored (recursive)', restoredFolders: restoreFolders.length });
   } catch (err) {
     console.error('Restore error:', err);
@@ -88,7 +88,7 @@ router.post('/trash/delete', requireAuth, async (req, res) => {
     const owner = req.user.email;
     const { id } = req.body;
     if (!id) return res.status(400).json({ message: 'id is required' });
-    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });          
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
 
     const file = await File.findById(id);
     if (file) {
@@ -103,7 +103,7 @@ router.post('/trash/delete', requireAuth, async (req, res) => {
       await file.deleteOne();
       const newUsed = await calculateUsedStorage(owner);
       await User.updateOne({ email: owner }, { storageUsed: newUsed });
-      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){ }
+      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch (_) { }
       return res.json({ message: 'File permanently deleted', id, storageUsed: newUsed });
     }
     const folder = await Folder.findById(id);
@@ -125,7 +125,7 @@ router.post('/trash/delete', requireAuth, async (req, res) => {
     const folderRes = await Folder.deleteMany({ _id: { $in: deleteFolders }, trashed: true });
     const newUsed = await calculateUsedStorage(owner);
     await User.updateOne({ email: owner }, { storageUsed: newUsed });
-    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${folderRes.deletedCount || 0} files=${fileRes.deletedCount || 0}`); } catch(_){ }
+    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${folderRes.deletedCount || 0} files=${fileRes.deletedCount || 0}`); } catch (_) { }
     return res.json({ message: 'Folder permanently deleted', deletedFolders: folderRes.deletedCount || 0, deletedFiles: fileRes.deletedCount || 0, storageUsed: newUsed });
   } catch (err) {
     console.error('Delete error:', err);
@@ -170,7 +170,7 @@ router.post('/trash/empty', requireAuth, async (req, res) => {
         await file.deleteOne();
         const newUsed = await calculateUsedStorage(owner);
         await User.updateOne({ email: owner }, { storageUsed: newUsed });
-        try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){}
+        try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch (_) { }
         return res.json({ message: 'File permanently deleted', id, storageUsed: newUsed });
       }
 
@@ -182,13 +182,25 @@ router.post('/trash/empty', requireAuth, async (req, res) => {
       // collect children
       const allFolders = await Folder.find({ owner }).lean();
       const deleteFolders = [];
-      const collect = (fid) => { deleteFolders.push(fid); allFolders.filter((f) => f.parent?.toString() === fid.toString()).forEach((c) => collect(c._id.toString())); };
+      const collect = (fid) => {
+        deleteFolders.push(fid.toString());
+
+        allFolders.forEach((f) => {
+          if (f.parent && f.parent.toString() === fid.toString()) {
+            collect(f._id.toString());
+          }
+        });
+      };
+      // const collect = (fid) => {
+      //   deleteFolders.push(fid);
+      //   allFolders.filter((f) => f.parent?.toString() === fid.toString()).forEach((c) => collect(c._id.toString()));
+      // };
       collect(id);
 
       const result = await removeFilesAndFolders(deleteFolders);
       const newUsed = await calculateUsedStorage(owner);
       await User.updateOne({ email: owner }, { storageUsed: newUsed });
-      try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${result.deletedFolders} files=${result.deletedFiles}`); } catch(_){}
+      try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${result.deletedFolders} files=${result.deletedFiles}`); } catch (_) { }
       return res.json({ message: 'Folder permanently deleted', deletedFolders: result.deletedFolders, deletedFiles: result.deletedFiles, storageUsed: newUsed });
     }
 
@@ -211,7 +223,7 @@ router.post('/trash/empty', requireAuth, async (req, res) => {
     const newUsed = await calculateUsedStorage(owner);
     await User.updateOne({ email: owner }, { storageUsed: newUsed });
 
-    try { writeActivity(`EMPTY TRASH owner=${owner}`, 'PERMANENT', `deletedFolders=${result.deletedFolders} deletedFiles=${result.deletedFiles + (rootDel.deletedCount || 0)}`); } catch(_){}
+    try { writeActivity(`EMPTY TRASH owner=${owner}`, 'PERMANENT', `deletedFolders=${result.deletedFolders} deletedFiles=${result.deletedFiles + (rootDel.deletedCount || 0)}`); } catch (_) { }
     return res.json({ message: 'Trash emptied', deletedFolders: result.deletedFolders, deletedFiles: (result.deletedFiles + (rootDel.deletedCount || 0)), storageUsed: newUsed });
   } catch (err) {
     console.error('Empty trash error:', err);
