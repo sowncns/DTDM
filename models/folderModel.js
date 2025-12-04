@@ -26,6 +26,7 @@ const folderSchema = new Schema({
   trashed: { type: Boolean, default: false },
   trashedAt: { type: Date, default: null },
   trashedBy: { type: String, default: null },
+  type : { type: String, default: "folder" }
 }, { timestamps: true });
 folderSchema.index({ owner: 1, parent: 1, name: 1 }, { unique: true, partialFilterExpression: { name: { $type: "string" } } });
 module.exports = mongoose.model("Folder", folderSchema);

@@ -27,9 +27,10 @@ router.get('/trash', requireAuth, async (req, res) => {
     const owner = req.user.email;
     const [folders, files] = await Promise.all([
       Folder.find({ owner, trashed: true }),
-      File.find({ owner, trashed: true }),
+      File.find({ owner, trashed: true }) ,
     ]);
-    res.json({ folders, files });
+    const data =[...folders, ...files]
+    res.json(data);
   } catch (err) {
     console.error('List trash error:', err);
     res.status(500).json({ message: 'Failed to list trash', error: err.message });
@@ -81,6 +82,58 @@ router.post('/trash/restore', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Restore failed', error: err.message });
   }
 });
+
+router.post('/trash/delete', requireAuth, async (req, res) => {
+  try {
+    const owner = req.user.email;
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: 'id is required' });
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });          
+
+    const file = await File.findById(id);
+    if (file) {
+      if (String(file.owner) !== String(owner)) return res.status(403).json({ message: 'Forbidden' });
+      if (!file.trashed) return res.status(400).json({ message: 'File is not in trash' });
+      // delete from S3 if exists
+      if (file.s3Url) {
+        const Key = file.s3Url.split('.com/')[1];
+        await s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET_NAME, Key }).promise();
+
+      await file.deleteOne();
+      const newUsed = await calculateUsedStorage(owner);
+      await User.updateOne({ email: owner }, { storageUsed: newUsed });
+      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){}
+      return res.json({ message: 'File permanently deleted', id, storageUsed: newUsed });
+      }
+    }
+    const folder = await Folder.findById(id);
+    if (!folder) return res.status(404).json({ message: 'Item not found' });
+    if (String(folder.owner) !== String(owner)) return res.status(403).json({ message: 'Forbidden' });
+    if (!folder.trashed) return res.status(400).json({ message: 'Folder is not in trash' });
+    // collect children
+    const allFolders = await Folder.find({ owner }).lean();
+    const deleteFolders = [];
+    const collect = (fid) => { deleteFolders.push(fid); allFolders.filter((f) => f.parent?.toString() === fid.toString()).forEach((c) => collect(c._id.toString())); };
+    collect(id);
+    const files = await File.find({ owner, folder: { $in: deleteFolders }, trashed: true }).lean();
+    const s3Objects = files.filter((f) => f.s3Url).map((f) => ({ Key: f.s3Url.split('.com/')[1] }));
+    if (s3Objects.length) {
+      await s3.deleteObjects({ Bucket: process.env.AWS_S3_BUCKET_NAME, Delete: { Objects: s3Objects } }).promise();
+
+    const fileRes = await File.deleteMany({ owner, folder: { $in: deleteFolders }, trashed: true });
+    const folderRes = await Folder.deleteMany({ _id: { $in: deleteFolders }, trashed: true });
+    const newUsed = await calculateUsedStorage(owner);
+    await User.updateOne({ email: owner }, { storageUsed: newUsed });
+    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${folderRes.deletedCount || 0} files=${fileRes.deletedCount || 0}`); } catch(_){}
+    return res.json({ message: 'Folder permanently deleted', deletedFolders: folderRes.deletedCount || 0, deletedFiles: fileRes.deletedCount || 0, storageUsed: newUsed });
+    }
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Delete failed', error: err.message });
+  }
+});
+
+
 
 router.post('/trash/empty', requireAuth, async (req, res) => {
   try {

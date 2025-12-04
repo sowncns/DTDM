@@ -75,13 +75,9 @@ router.get("/user/:username", requireAuth, async (req, res) => {
     const rootFolders = Object.values(folderMap).filter((f) => !f.parent);
 
 
-    res.json({
-      owner: username,
-      viewer: currentUser,
-      totalFolders: rootFolders.length,
-      totalRootFiles: rootFiles.length,
-      structure: [...rootFolders, ...rootFiles],
-    });
+    res.json(
+     [...rootFolders, ...rootFiles]
+    );
   } catch (error) {
     console.error("Drive tree error:", error);
     res.status(500).json({

@@ -37,15 +37,22 @@ router.post("/delete", requireAuth, async (req, res) => {
     const fileById = await File.findById(id);
 
     if (fileById) {
-      // If file exists but owner mismatch -> forbidden
-      if (String(fileById.owner) !== String(owner)) {
-        return res.status(403).json({ message: "Forbidden: only owner can delete this file" });
-      }
       const file = fileById;
+      // Allow delete if requester is owner OR has sufficient share access (edit/all)
+      const isOwner = String(file.owner) === String(owner);
+      const sharedEntry = (file.sharedWith || []).find((p) => p.userId === owner);
+      const hasEditAccess = sharedEntry && Array.isArray(sharedEntry.access) && (sharedEntry.access.includes("edit") || sharedEntry.access.includes("all"));
+      if (!isOwner && !hasEditAccess) {
+        return res.status(403).json({ message: "Forbidden: only owner or users with edit access can delete this file" });
+      }
 
       // If permanent flag true => permanently delete from S3 and DB
       const permanent = Boolean(req.body?.permanent);
       if (permanent) {
+        // Only owner can permanently delete
+        if (!isOwner) {
+          return res.status(403).json({ message: "Forbidden: only owner can permanently delete this file" });
+        }
         if (file.s3Url) {
           const key = file.s3Url.split(".com/")[1];
           await s3.deleteObject({
@@ -60,7 +67,7 @@ router.post("/delete", requireAuth, async (req, res) => {
         const newUsed = await calculateUsedStorage(owner);
         await User.updateOne({ email: owner }, { storageUsed: newUsed });
 
-        try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){}
+        try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'PERMANENT', `size=${file.size}`); } catch(_){ }
         return res.json({ message: "File permanently deleted", type: "file", id, storageUsed: newUsed });
       }
 
@@ -70,7 +77,7 @@ router.post("/delete", requireAuth, async (req, res) => {
       file.trashedBy = owner;
       await file.save();
 
-      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'TRASHED', `name=${file.filename}`); } catch(_){}
+      try { writeActivity(`DELETE FILE id=${id} owner=${owner}`, 'TRASHED', `name=${file.filename}`); } catch(_){ }
       return res.json({ message: "File moved to trash", type: "file", id });
     }
 
@@ -82,17 +89,37 @@ router.post("/delete", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    // If folder exists but requester isn't the owner -> forbidden
-    if (String(folderById.owner) !== String(owner)) {
-      return res.status(403).json({ message: "Forbidden: only owner can delete this folder" });
+    // If folder exists -> check owner OR sharedWith via folder or its ancestors
+    const folder = folderById;
+    const isOwnerFolder = String(folder.owner) === String(owner);
+    // check direct folder sharedWith
+    const directShare = (folder.sharedWith || []).find((p) => p.userId === owner);
+    const hasFolderEdit = directShare && Array.isArray(directShare.access) && (directShare.access.includes("edit") || directShare.access.includes("all"));
+
+    // If not owner and no direct edit share, check ancestors for shared entries granting edit
+    let ancestorHasEdit = false;
+    if (!isOwnerFolder && !hasFolderEdit) {
+      // load ancestors
+      if (Array.isArray(folder.ancestors) && folder.ancestors.length > 0) {
+        const ancestorDocs = await Folder.find({ _id: { $in: folder.ancestors } });
+        for (const a of ancestorDocs) {
+          const s = (a.sharedWith || []).find((p) => p.userId === owner);
+          if (s && Array.isArray(s.access) && (s.access.includes("edit") || s.access.includes("all"))) {
+            ancestorHasEdit = true;
+            break;
+          }
+        }
+      }
     }
 
-    const folder = folderById;
+    if (!isOwnerFolder && !hasFolderEdit && !ancestorHasEdit) {
+      return res.status(403).json({ message: "Forbidden: only owner or users with edit access can delete this folder" });
+    }
 
     // =========================================
     // XÓA SUB-FOLDERS + FILES RECURSIVELY
     // =========================================
-    const allFolders = await Folder.find({ owner }).lean();
+    const allFolders = await Folder.find({ owner: folder.owner }).lean();
     const deleteFolders = [];
 
     const collectChildren = (folderId) => {
@@ -104,38 +131,40 @@ router.post("/delete", requireAuth, async (req, res) => {
 
     collectChildren(id);
 
-    // Lấy tất cả file trong các folder
-    const files = await File.find({
-      owner,
-      folder: { $in: deleteFolders },
-    });
+    // Lấy tất cả file trong các folder (for the folder owner)
+    const files = await File.find({ folder: { $in: deleteFolders } });
 
     const permanent = Boolean(req.body?.permanent);
+
+    if (permanent && !isOwnerFolder) {
+      return res.status(403).json({ message: "Forbidden: only owner can permanently delete this folder" });
+    }
 
     if (!permanent) {
       // Soft delete: mark folders and files as trashed
       const now = new Date();
       await Folder.updateMany({ _id: { $in: deleteFolders } }, { $set: { trashed: true, trashedAt: now, trashedBy: owner } });
-      await File.updateMany({ owner, folder: { $in: deleteFolders } }, { $set: { trashed: true, trashedAt: now, trashedBy: owner } });
+      // For files: allow marking trashed regardless of file.owner because folder owner/shared allowed deletion
+      await File.updateMany({ folder: { $in: deleteFolders } }, { $set: { trashed: true, trashedAt: now, trashedBy: owner } });
 
       try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'TRASHED', `folders=${deleteFolders.length} files=${files.length}`); } catch(_){}
       return res.json({ message: "Folder moved to trash (recursive)", type: "folder", id, trashedFolders: deleteFolders.length, trashedFiles: files.length });
     }
 
-    // permanent delete: remove from S3 and DB
+    // permanent delete: only allowed for ownerFolder, remove from S3 and DB
     const s3Objects = files.filter((f) => f.s3Url).map((f) => ({ Key: f.s3Url.split(".com/")[1] }));
     if (s3Objects.length > 0) {
       await s3.deleteObjects({ Bucket: process.env.AWS_S3_BUCKET_NAME, Delete: { Objects: s3Objects } }).promise();
     }
 
-    // Xóa DB permanently
-    await File.deleteMany({ owner, folder: { $in: deleteFolders } });
+    // Delete DB permanently
+    await File.deleteMany({ folder: { $in: deleteFolders } });
     await Folder.deleteMany({ _id: { $in: deleteFolders } });
-    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${deleteFolders.length} files=${files.length}`); } catch(_){}
+    try { writeActivity(`DELETE FOLDER id=${id} owner=${owner}`, 'PERMANENT', `folders=${deleteFolders.length} files=${files.length}`); } catch(_){ }
 
-    // ⬅️ Cập nhật lại storageUsed
-    const newUsed = await calculateUsedStorage(owner);
-    await User.updateOne({ email: owner }, { storageUsed: newUsed });
+    // ⬅️ Update storageUsed for the folder owner
+    const newUsed = await calculateUsedStorage(folder.owner);
+    await User.updateOne({ email: folder.owner }, { storageUsed: newUsed });
 
     return res.json({
       message: "Folder and its contents deleted",

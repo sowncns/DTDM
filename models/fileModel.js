@@ -27,6 +27,7 @@ const fileSchema = new mongoose.Schema({
   trashedAt: { type: Date, default: null },
   trashedBy: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
+  type : { type: String, default: "file" },
 });
 
 module.exports = mongoose.model("File", fileSchema);
