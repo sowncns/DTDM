@@ -100,4 +100,61 @@ router.post('/folder', async (req, res) => {
   }
 });
 
+// GET /share/my-shared - list all files/folders shared with authenticated user
+router.get('/my-shared', requireAuth, async (req, res) => {
+  try {
+    const requester = req.user.email;
+
+    // Find all files where requester is in sharedWith and not trashed
+    const sharedFiles = await File.find({
+      'sharedWith.userId': requester,
+      trashed: { $ne: true }
+    }).select('_id filename s3Url size mimetype visibility owner sharedWith');
+
+    // Find all folders where requester is in sharedWith and not trashed
+    const sharedFolders = await Folder.find({
+      'sharedWith.userId': requester,
+      trashed: { $ne: true }
+    }).select('_id name visibility owner sharedWith');
+
+    // Transform response with access level for each item
+    const files = sharedFiles.map(f => {
+      const access = (f.sharedWith || []).find(s => s.userId === requester)?.access || [];
+      return {
+        id: f._id.toString(),
+        type: 'file',
+        filename: f.filename,
+        s3Url: f.s3Url,
+        size: f.size,
+        mimetype: f.mimetype,
+        visibility: f.visibility,
+        owner: f.owner,
+        access: access
+      };
+    });
+
+    const folders = sharedFolders.map(fo => {
+      const access = (fo.sharedWith || []).find(s => s.userId === requester)?.access || [];
+      return {
+        id: fo._id.toString(),
+        type: 'folder',
+        name: fo.name,
+        visibility: fo.visibility,
+        owner: fo.owner,
+        access: access
+      };
+    });
+
+    try { writeActivity(`LIST SHARED owner=${requester}`, 'OK', `files=${files.length} folders=${folders.length}`); } catch(_){}
+    return res.json({
+      files,
+      folders,
+      total: files.length + folders.length
+    });
+  } catch (err) {
+    console.error('List shared error:', err);
+    return res.status(500).json({ message: 'Failed to list shared items', error: err.message });
+  }
+});
+
 module.exports = router;
